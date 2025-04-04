@@ -24,6 +24,14 @@ def parse_cors(v: Any) -> list[str] | str:
     raise ValueError(v)
 
 
+def parse_cors_regexes(v: Any) -> list[str]:
+    if isinstance(v, str):
+        return [i.strip() for i in v.split(",")]
+    elif isinstance(v, list):
+        return v
+    return ValueError(v)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./backend/)
@@ -48,6 +56,15 @@ class Settings(BaseSettings):
         return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS] + [
             self.FRONTEND_HOST
         ]
+
+    BACKEND_CORS_ORIGINS_REGEXES: Annotated[
+        list[str] | str, BeforeValidator(parse_cors_regexes)
+    ] = []
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def all_cors_origins_regexes(self) -> str:
+        return "|".join(self.BACKEND_CORS_ORIGINS_REGEXES)
 
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None
