@@ -287,24 +287,24 @@ Replace `fastapi-project.example.com` with your domain.
 
 ### Main Traefik Dashboard
 
-Traefik UI: `https://traefik.fastapi-project.example.com`
+Traefik UI: `https://traefik.io-agh-2025.live`
 
 ### Production
 
-Frontend: `https://dashboard.fastapi-project.example.com`
+Frontend: `https://dashboard.io-agh-2025.live`
 
-Backend API docs: `https://api.fastapi-project.example.com/docs`
+Backend API docs: `https://api.io-agh-2025.live/docs`
 
-Backend API base URL: `https://api.fastapi-project.example.com`
+Backend API base URL: `https://api.io-agh-2025.live`
 
-Adminer: `https://adminer.fastapi-project.example.com`
+Adminer: `https://adminer.io-agh-2025.live`
 
 ### Staging
 
-Frontend: `https://dashboard.staging.fastapi-project.example.com`
+Frontend: `https://dashboard.staging.io-agh-2025.live`
 
-Backend API docs: `https://api.staging.fastapi-project.example.com/docs`
+Backend API docs: `https://api.staging.io-agh-2025.live/docs`
 
-Backend API base URL: `https://api.staging.fastapi-project.example.com`
+Backend API base URL: `https://api.staging.io-agh-2025.live`
 
-Adminer: `https://adminer.staging.fastapi-project.example.com`
+Adminer: `https://adminer.staging.io-agh-2025.live`

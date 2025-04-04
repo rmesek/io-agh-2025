@@ -1,7 +1,9 @@
 # Full Stack FastAPI Template
 
-<a href="https://github.com/fastapi/full-stack-fastapi-template/actions?query=workflow%3ATest" target="_blank"><img src="https://github.com/fastapi/full-stack-fastapi-template/workflows/Test/badge.svg" alt="Test"></a>
-<a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/fastapi/full-stack-fastapi-template" target="_blank"><img src="https://coverage-badge.samuelcolvin.workers.dev/fastapi/full-stack-fastapi-template.svg" alt="Coverage"></a>
+[![Test](https://github.com/rmesek/io-agh-2025/actions/workflows/lint-backend.yml/badge.svg)](https://github.com/rmesek/io-agh-2025/actions/workflows/lint-backend.yml)
+[![Test](https://github.com/rmesek/io-agh-2025/actions/workflows/playwright.yml/badge.svg)](https://github.com/rmesek/io-agh-2025/actions/workflows/playwright.yml)
+[![Test](https://github.com/rmesek/io-agh-2025/actions/workflows/test-backend.yml/badge.svg)](https://github.com/rmesek/io-agh-2025/actions/workflows/test-backend.yml)
+[![Test](https://github.com/rmesek/io-agh-2025/actions/workflows/test-docker-compose.yml/badge.svg)](https://github.com/rmesek/io-agh-2025/actions/workflows/test-docker-compose.yml)
 
 ## Technology Stack and Features
 
