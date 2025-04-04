@@ -24,12 +24,12 @@ def parse_cors(v: Any) -> list[str] | str:
     raise ValueError(v)
 
 
-def parse_cors_regexes(v: Any) -> list[str]:
+def parse_cors_regexes(v: Any) -> list[str] | str:
     if isinstance(v, str):
         return [i.strip() for i in v.split(",")]
-    elif isinstance(v, list):
+    elif isinstance(v, list | str):
         return v
-    return ValueError(v)
+    raise ValueError(v)
 
 
 class Settings(BaseSettings):
