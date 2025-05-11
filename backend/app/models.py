@@ -1,7 +1,34 @@
 import uuid
+from datetime import datetime, timezone
+from enum import Enum as PyEnum
 
 from pydantic import EmailStr
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Column, Field, Relationship, SQLModel
+from sqlmodel import Enum as SQLModelEnum
+
+
+class UserRoleEnum(str, PyEnum):
+    STUDENT = "student"
+    PROMOTER = "promoter"
+
+
+class StudyStageEnum(str, PyEnum):
+    BACHELOR = "bachelor"
+    MASTER = "master"
+    ANY = "any"
+
+
+class ApplicationStatusEnum(str, PyEnum):
+    PENDING_APPROVAL = "pending_approval"
+    APPROVED_BY_PROMOTER = "approved_by_promoter"
+    REJECTED_BY_PROMOTER = "rejected_by_promoter"
+    CANCELED_BY_STUDENT = "canceled_by_student"
+
+
+class ThesisTopicStatusEnum(str, PyEnum):
+    OPEN = "open"
+    CLOSED = "closed"
+    FULL = "full"
 
 
 # Shared properties
@@ -10,6 +37,9 @@ class UserBase(SQLModel):
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
+    role: UserRoleEnum | None = Field(
+        default=None, sa_column=Column(SQLModelEnum(UserRoleEnum), nullable=True)
+    )
 
 
 # Properties to receive via API on creation
@@ -21,12 +51,17 @@ class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=40)
     full_name: str | None = Field(default=None, max_length=255)
+    role: UserRoleEnum
 
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
     password: str | None = Field(default=None, min_length=8, max_length=40)
+    full_name: str | None = None
+    is_active: bool | None = None  # type: ignore
+    is_superuser: bool | None = None  # type: ignore
+    role: UserRoleEnum | None = None
 
 
 class UserUpdateMe(SQLModel):
@@ -45,6 +80,27 @@ class User(UserBase, table=True):
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
+    # relationships
+    # one-to-one relationship to profile tables
+    student_profile: "StudentProfile" = Relationship(
+        back_populates="user", sa_relationship_kwargs={"uselist": False}
+    )
+    promoter_profile: "PromoterProfile" = Relationship(
+        back_populates="user", sa_relationship_kwargs={"uselist": False}
+    )
+
+    # if user is a promoter: they can author multiple thesis topics
+    thesis_topics_authored: list["ThesisTopic"] = Relationship(
+        back_populates="promoter",
+        sa_relationship_kwargs={"primaryjoin": "User.id==ThesisTopic.promoter_id"},
+    )
+
+    # if user is a student: they can apply to multiple thesis topics
+    thesis_applications_submitted: list["ThesisApplication"] = Relationship(
+        back_populates="student",
+        sa_relationship_kwargs={"primaryjoin": "User.id==ThesisApplication.student_id"},
+    )
+
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
@@ -53,6 +109,167 @@ class UserPublic(UserBase):
 
 class UsersPublic(SQLModel):
     data: list[UserPublic]
+    count: int
+
+
+class PromoterProfileBase(SQLModel):
+    academic_degree: str | None = Field(default=None, max_length=100)
+    can_supervise_bachelor: bool = Field(default=False)
+    can_supervise_master: bool = Field(default=False)
+    student_limit: int = Field(default=5, ge=0)
+
+
+class PromoterProfile(PromoterProfileBase, table=True):
+    user_id: uuid.UUID = Field(default=None, primary_key=True, foreign_key="user.id")
+    user: User = Relationship(back_populates="promoter_profile")
+
+
+class PromoterProfileCreate(PromoterProfileBase):
+    user_id: uuid.UUID
+
+
+class PromoterProfileUpdate(SQLModel):
+    academic_degree: str | None = None
+    can_supervise_bachelor: bool | None = None
+    can_supervise_master: bool | None = None
+    student_limit: int | None = Field(default=None, ge=0)
+
+
+class PromoterProfilePublic(PromoterProfileBase):
+    user_id: uuid.UUID
+    user: UserPublic | None = None
+
+
+class StudentProfileBase(SQLModel):
+    study_stage: StudyStageEnum | None = Field(
+        default=None, sa_column=Column(SQLModelEnum(StudyStageEnum))
+    )
+    year_of_study: int | None = Field(default=None, ge=1, le=7)
+
+
+class StudentProfile(StudentProfileBase, table=True):
+    user_id: uuid.UUID = Field(default=None, primary_key=True, foreign_key="user.id")
+    user: User = Relationship(back_populates="student_profile")
+
+
+class StudentProfileCreate(StudentProfileBase):
+    user_id: uuid.UUID
+
+
+class StudentProfileUpdate(SQLModel):
+    study_stage: StudyStageEnum | None = None
+    year_of_study: int | None = Field(default=None, ge=1, le=7)
+
+
+class StudentProfilePublic(StudentProfileBase):
+    user_id: uuid.UUID
+    user: UserPublic | None = None
+
+
+class ThesisTopicBase(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None)
+    target_study_stage: StudyStageEnum = Field(
+        sa_column=Column(SQLModelEnum(StudyStageEnum)), default=StudyStageEnum.ANY
+    )
+    slots_total: int = Field(default=1, ge=1)
+    status: ThesisTopicStatusEnum = Field(
+        sa_column=Column(SQLModelEnum(ThesisTopicStatusEnum)),
+        default=ThesisTopicStatusEnum.OPEN,
+    )
+
+
+class ThesisTopic(ThesisTopicBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    promoter_id: uuid.UUID = Field(foreign_key="user.id")
+
+    promoter: User = Relationship(back_populates="thesis_topics_authored")
+    applications: list["ThesisApplication"] = Relationship(
+        back_populates="thesis_topic", cascade_delete=True
+    )
+
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+    )
+
+
+class ThesisTopicCreate(ThesisTopicBase):
+    pass
+
+
+class ThesisTopicUpdate(SQLModel):  # All fields optional for update
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None)
+    target_study_stage: StudyStageEnum | None = None
+    slots_total: int | None = Field(default=None, ge=1)
+    status: ThesisTopicStatusEnum | None = None
+
+
+class ThesisTopicPublic(ThesisTopicBase):
+    id: uuid.UUID
+    promoter_id: uuid.UUID
+    promoter: UserPublic | None = None
+    slots_available: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class ThesisTopicsPublic(SQLModel):
+    data: list[ThesisTopicPublic]
+    count: int
+
+
+class ThesisApplicationBase(SQLModel):
+    application_date: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+    )
+    status: ApplicationStatusEnum = Field(
+        sa_column=Column(SQLModelEnum(ApplicationStatusEnum)),
+        default=ApplicationStatusEnum.PENDING_APPROVAL,
+    )
+
+
+class ThesisApplication(ThesisApplicationBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    student_id: uuid.UUID = Field(foreign_key="user.id")
+    thesis_topic_id: uuid.UUID = Field(foreign_key="thesistopic.id")
+
+    promoter_id: uuid.UUID = Field(foreign_key="user.id")
+
+    student: User = Relationship(
+        back_populates="thesis_applications_submitted",
+        sa_relationship_kwargs={"foreign_keys": "[ThesisApplication.student_id]"},
+    )
+    thesis_topic: ThesisTopic = Relationship(back_populates="applications")
+
+    resolution_date: datetime | None = Field(default=None)
+
+
+class ThesisApplicationCreate(SQLModel):
+    thesis_topic_id: uuid.UUID
+
+
+class ThesisApplicationUpdate(SQLModel):
+    status: ApplicationStatusEnum
+
+
+class ThesisApplicationPublic(ThesisApplicationBase):
+    id: uuid.UUID
+    student_id: uuid.UUID
+    thesis_topic_id: uuid.UUID
+    promoter_id: uuid.UUID
+    student: UserPublic | None = None
+    thesis_topic: ThesisTopicPublic | None = None
+    resolution_date: datetime | None
+
+
+class ThesisApplicationsPublic(SQLModel):
+    data: list[ThesisApplicationPublic]
     count: int
 
 
