@@ -170,6 +170,11 @@ class StudentProfilePublic(StudentProfileBase):
     user: UserPublic | None = None
 
 
+class StudentProfilesPublic(SQLModel):
+    data: list[StudentProfilePublic]
+    count: int
+
+
 class ThesisTopicBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None)
@@ -177,6 +182,7 @@ class ThesisTopicBase(SQLModel):
         sa_column=Column(SQLModelEnum(StudyStageEnum)), default=StudyStageEnum.ANY
     )
     slots_total: int = Field(default=1, ge=1)
+    slots_available: int = Field(default=1, ge=0)
     status: ThesisTopicStatusEnum = Field(
         sa_column=Column(SQLModelEnum(ThesisTopicStatusEnum)),
         default=ThesisTopicStatusEnum.OPEN,
@@ -203,7 +209,7 @@ class ThesisTopic(ThesisTopicBase, table=True):
 
 
 class ThesisTopicCreate(ThesisTopicBase):
-    pass
+    promoter_id: uuid.UUID | None = Field(default=None)
 
 
 class ThesisTopicUpdate(SQLModel):  # All fields optional for update
@@ -218,7 +224,6 @@ class ThesisTopicPublic(ThesisTopicBase):
     id: uuid.UUID
     promoter_id: uuid.UUID
     promoter: UserPublic | None = None
-    slots_available: int
     created_at: datetime
     updated_at: datetime
 
@@ -256,6 +261,7 @@ class ThesisApplication(ThesisApplicationBase, table=True):
 
 class ThesisApplicationCreate(SQLModel):
     thesis_topic_id: uuid.UUID
+    student_id: uuid.UUID | None = Field(default=None)
 
 
 class ThesisApplicationUpdate(SQLModel):
