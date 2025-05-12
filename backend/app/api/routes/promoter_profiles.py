@@ -18,14 +18,19 @@ from app.models import (
 router = APIRouter(prefix="/promoter-profiles", tags=["promoter-profiles"])
 
 
-@router.get("/", response_model=PromoterProfilesPublic)
+@router.get(
+    "/",
+    response_model=PromoterProfilesPublic,
+)
 def read_promoter_profiles(
-    *, session: SessionDep, skip: int = 0, limit: int = 100
+    *,
+    session: SessionDep,
+    skip: int = 0,
+    limit: int = 100,
 ) -> Any:
     """
     Retrieve promoters.
     """
-
     count_statement = select(func.count()).select_from(PromoterProfile)
     count = session.exec(count_statement).one()
 
@@ -35,10 +40,15 @@ def read_promoter_profiles(
     return PromoterProfilesPublic(data=promoters, count=count)  # type: ignore
 
 
-@router.post("/", response_model=PromoterProfilePublic)
+@router.post(
+    "/",
+    response_model=PromoterProfilePublic,
+)
 def create_promoter_profile(
-    *, session: SessionDep, promoter_profile_in: PromoterProfileCreate
-):
+    *,
+    session: SessionDep,
+    promoter_profile_in: PromoterProfileCreate,
+) -> Any:
     """
     Create new promoter profile.
     The user associated with user_id must exist and have the 'promoter' role.
@@ -71,8 +81,15 @@ def create_promoter_profile(
     return promoter_profile
 
 
-@router.get("/{user_id}", response_model=PromoterProfilePublic)
-def read_promoter_profile(user_id: uuid.UUID, session: SessionDep):
+@router.get(
+    "/{user_id}",
+    response_model=PromoterProfilePublic,
+)
+def read_promoter_profile(
+    *,
+    user_id: uuid.UUID,
+    session: SessionDep,
+) -> Any:
     """
     Get promoter profile by user ID.
     """
