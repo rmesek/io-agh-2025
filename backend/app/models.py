@@ -51,7 +51,6 @@ class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=40)
     full_name: str | None = Field(default=None, max_length=255)
-    role: UserRoleEnum
 
 
 # Properties to receive via API on update, all are optional
@@ -138,6 +137,11 @@ class PromoterProfileUpdate(SQLModel):
 class PromoterProfilePublic(PromoterProfileBase):
     user_id: uuid.UUID
     user: UserPublic | None = None
+
+
+class PromoterProfilesPublic(SQLModel):
+    data: list[PromoterProfilePublic]
+    count: int
 
 
 class StudentProfileBase(SQLModel):
