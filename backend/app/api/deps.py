@@ -11,7 +11,7 @@ from sqlmodel import Session
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
-from app.models import TokenPayload, User
+from app.models import TokenPayload, User, UserRoleEnum
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -54,4 +54,16 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
         raise HTTPException(
             status_code=403, detail="The user doesn't have enough privileges"
         )
+    return current_user
+
+
+def get_current_active_student(current_user: CurrentUser) -> User:
+    if current_user.role != UserRoleEnum.STUDENT:
+        raise HTTPException(status_code=403, detail="User is not a student")
+    return current_user
+
+
+def get_current_active_promoter(current_user: CurrentUser) -> User:
+    if current_user.role != UserRoleEnum.PROMOTER:
+        raise HTTPException(status_code=403, detail="User is not a promoter")
     return current_user
