@@ -28,11 +28,13 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
 
   const isPromotor = currentUser?.role === "promoter"
   const isSuperUser = currentUser?.is_superuser
+  const isStudent = currentUser?.role === "student"
 
   const finalItems: Item[] = [
-    ...items,  
+    ...items,
     ...(isSuperUser ? [{ icon: FiUsers, title: "Admin", path: "/admin" }] : []),
     ...(isPromotor ? [{ icon: FiBook, title: "Thesis", path: "/thesis" }] : []),
+    ...(isStudent ? [{ icon: FiBook, title: "Topics", path: "/topics" }] : []),
   ]
 
   const listItems = finalItems.map(({ icon, title, path }) => (
