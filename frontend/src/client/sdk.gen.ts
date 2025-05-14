@@ -46,6 +46,17 @@ import type {
   UtilsTestEmailData,
   UtilsTestEmailResponse,
   UtilsHealthCheckResponse,
+  ThesesReadThesesData,
+  ThesesReadThesesResponse,
+  ThesesCreateThesisData,
+  ThesesCreateThesisResponse,
+  ThesesReadThesisData,
+  ThesesReadThesisResponse,
+  ThesesUpdateThesisData,
+  ThesesUpdateThesisResponse,
+  ThesesDeleteThesisData,
+  ThesesDeleteThesisResponse,
+  
 } from "./types.gen"
 
 export class ItemsService {
@@ -546,4 +557,117 @@ export class UtilsService {
       url: "/api/v1/utils/health-check/",
     })
   }
+}
+export class ThesisService {
+  /**
+   * Read Thesis Topics
+   * Retrieve thesis topics.
+   * @param data The data for the request.
+   * @param data.skip
+   * @param data.limit
+   * @returns ThesisTopicsPublic Successful Response
+   * @throws ApiError
+   */
+  public static readThesisTopics(
+    data: ThesesReadThesesData = {},
+  ): CancelablePromise<ThesesReadThesesResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/thesis-topics/",
+      query: {
+        skip: data.skip,
+        limit: data.limit,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+public static createThesisTopic(
+    data: ThesesCreateThesisData,
+): CancelablePromise<ThesesCreateThesisResponse> {
+    return __request(OpenAPI, {
+        method: "POST",
+        url: "/api/v1/thesis-topics/",
+        body: data.requestBody,
+        mediaType: "application/json",
+        errors: {
+            422: "Validation Error",
+        },
+    })
+}
+
+  /**
+   * Read Thesis Topic
+   * Get thesis topic by ID.
+   * @param data The data for the request.
+   * @param data.id
+   * @returns ThesisTopicPublic Successful Response
+   * @throws ApiError
+   */
+  public static readThesisTopic(
+    data: ThesesReadThesisData,
+  ): CancelablePromise<ThesesReadThesisResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/thesis-topics/{id}",
+      path: {
+        id: data.id,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Update Thesis Topic
+   * Update a thesis topic.
+   * @param data The data for the request.
+   * @param data.id
+   * @param data.requestBody
+   * @returns ThesisTopicPublic Successful Response
+   * @throws ApiError
+   */
+  public static updateThesisTopic(
+    data: ThesesUpdateThesisData,
+  ): CancelablePromise<ThesesUpdateThesisResponse> {
+    return __request(OpenAPI, {
+      method: "PUT",
+      url: "/api/v1/thesis-topics/{id}",
+      path: {
+        id: data.id,
+      },
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Delete Thesis Topic
+   * Delete a thesis topic.
+   * @param data The data for the request.
+   * @param data.id
+   * @returns Message Successful Response
+   * @throws ApiError
+   */
+  public static deleteThesisTopic(
+    data: ThesesDeleteThesisData,
+  ): CancelablePromise<ThesesDeleteThesisResponse> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: "/api/v1/thesis-topics/{id}",
+      path: {
+        id: data.id,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
 }
