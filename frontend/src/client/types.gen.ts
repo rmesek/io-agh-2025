@@ -68,13 +68,15 @@ export type UserCreate = {
   full_name?: string | null
   password: string
 }
+export type UserRoleEnum = 'student' | 'promoter';
 
-export type UserPublic = {
-  email: string
-  is_active?: boolean
-  is_superuser?: boolean
-  full_name?: string | null
-  id: string
+export interface UserPublic {
+  email: string;
+  is_active?: boolean;
+  is_superuser?: boolean;
+  full_name?: string | null;
+  id: string;
+  role?: UserRoleEnum | null;
 }
 
 export type UserRegister = {
@@ -232,3 +234,80 @@ export type UtilsTestEmailData = {
 export type UtilsTestEmailResponse = Message
 
 export type UtilsHealthCheckResponse = boolean
+export type ThesisTopicCreate = {
+  title: string
+  description?: string | null
+  promoter_id?: string | null
+  target_study_stage?: "bachelor" | "master" | "any"
+  slots_total?: number
+  slots_available?: number
+  status?: "open" | "closed"
+}
+
+export type ThesisTopicUpdate = {
+  title?: string | null
+  description?: string | null
+  promoter_id?: string | null
+  target_study_stage?: "bachelor" | "master" | "any"
+  slots_total?: number
+  slots_available?: number
+  status?: "open" | "closed"
+}
+
+export type ThesisTopicPublic = {
+  id: string
+  title: string
+  description?: string | null
+  promoter_id: string
+  created_at: string
+  updated_at: string
+  target_study_stage: "bachelor" | "master" | "any"
+  slots_total: number
+  slots_available: number
+  status: "open" | "closed"
+  promoter?: {
+    user: {
+      full_name: string
+    }
+  } | null
+}
+
+export type ThesisTopicsPublic = {
+  data: Array<ThesisTopicPublic>
+  count: number
+}
+
+
+
+// Request/Response types
+export type ThesesReadThesesData = {
+  skip?: number
+  limit?: number
+}
+
+export type ThesesReadThesesResponse = ThesisTopicsPublic
+
+export type ThesesCreateThesisData = {
+  requestBody: ThesisTopicCreate
+}
+
+export type ThesesCreateThesisResponse = ThesisTopicPublic
+
+export type ThesesReadThesisData = {
+  id: string
+}
+
+export type ThesesReadThesisResponse = ThesisTopicPublic
+
+export type ThesesUpdateThesisData = {
+  id: string
+  requestBody: ThesisTopicUpdate
+}
+
+export type ThesesUpdateThesisResponse = ThesisTopicPublic
+
+export type ThesesDeleteThesisData = {
+  id: string
+}
+
+export type ThesesDeleteThesisResponse = Message
