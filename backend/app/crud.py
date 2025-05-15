@@ -9,6 +9,12 @@ from app.models import (
     ItemCreate,
     PromoterProfile,
     PromoterProfileCreate,
+    PromoterProfileCreateMe,
+    PromoterProfileUpdate,
+    StudentProfile,
+    StudentProfileCreate,
+    StudentProfileCreateMe,
+    StudentProfileUpdate,
     User,
     UserCreate,
     UserUpdate,
@@ -72,14 +78,62 @@ def create_promoter_profile(
     return db_obj
 
 
-def create_student_profile(
-    *, session: Session, student_profile_create: PromoterProfileCreate
+def create_promoter_profile_me(
+    *, session: Session, promoter_profile_create: PromoterProfileCreateMe
 ) -> PromoterProfile:
-    db_obj = PromoterProfile.model_validate(student_profile_create)
+    db_obj = PromoterProfile.model_validate(promoter_profile_create)
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
+
+def update_promoter_profile(
+    *,
+    session: Session,
+    db_promoter_profile: PromoterProfile,
+    promoter_profile_in: PromoterProfileUpdate,
+) -> Any:
+    promoter_profile_data = promoter_profile_in.model_dump(exclude_unset=True)
+    db_promoter_profile.sqlmodel_update(promoter_profile_data)
+    session.add(db_promoter_profile)
+    session.commit()
+    session.refresh(db_promoter_profile)
+    return db_promoter_profile
+
+
+def create_student_profile(
+    *, session: Session, student_profile_create: StudentProfileCreate
+) -> StudentProfile:
+    db_obj = StudentProfile.model_validate(student_profile_create)
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def create_student_profile_me(
+    *, session: Session, student_profile_create: StudentProfileCreateMe
+) -> StudentProfile:
+    db_obj = StudentProfile.model_validate(student_profile_create)
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def update_student_profile(
+    *,
+    session: Session,
+    db_student_profile: StudentProfile,
+    student_profile_in: StudentProfileUpdate,
+) -> Any:
+    student_profile_data = student_profile_in.model_dump(exclude_unset=True)
+    db_student_profile.sqlmodel_update(student_profile_data)
+    session.add(db_student_profile)
+    session.commit()
+    session.refresh(db_student_profile)
+    return db_student_profile
 
 
 # def create_user_with_profile(*, session: Session, user_create: UserCreate) -> User:

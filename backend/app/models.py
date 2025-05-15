@@ -160,6 +160,10 @@ class PromoterProfileCreate(PromoterProfileBase):
     user_id: uuid.UUID
 
 
+class PromoterProfileCreateMe(PromoterProfileBase):
+    pass
+
+
 class PromoterProfileUpdate(SQLModel):
     academic_degree: str | None = Field(default=None, max_length=100)
     can_supervise_bachelor: bool | None = Field(default=None)
@@ -209,6 +213,10 @@ class StudentProfile(StudentProfileBase, table=True):
 
 class StudentProfileCreate(StudentProfileBase):
     user_id: uuid.UUID
+
+
+class StudentProfileCreateMe(StudentProfileBase):
+    pass
 
 
 class StudentProfileUpdate(SQLModel):
