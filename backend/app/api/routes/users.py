@@ -173,7 +173,7 @@ def delete_user_me(
 def register_user(
     session: SessionDep,
     user_in: UserRegister,
-) -> Any:
+) -> Any:  # TODO: consider if we allow users to self-register
     """
     Create new user without the need to be logged in.
     """

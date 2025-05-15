@@ -70,3 +70,32 @@ def create_promoter_profile(
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
+
+def create_student_profile(
+    *, session: Session, student_profile_create: PromoterProfileCreate
+) -> PromoterProfile:
+    db_obj = PromoterProfile.model_validate(student_profile_create)
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+# def create_user_with_profile(*, session: Session, user_create: UserCreate) -> User:
+#     db_user = User.model_validate(
+#         user_create, update={"hashed_password": get_password_hash(user_create.password)}
+#     )
+#     session.add(db_user)
+#     session.commit()
+#     session.refresh(db_user)
+
+#     if db_user.role == UserRoleEnum.PROMOTER:
+#         profile_create = PromoterProfileCreate(user_id=db_user.id)
+#         create_promoter_profile(session=session, promoter_profile_create=profile_create)
+#     elif db_user.role == UserRoleEnum.STUDENT:
+#         profile_create = PromoterProfileCreate(user_id=db_user.id)
+#         create_student_profile(session=session, student_profile_create=profile_create)
+
+#     session.refresh(db_user)
+#     return db_user
