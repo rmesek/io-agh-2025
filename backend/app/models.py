@@ -10,6 +10,7 @@ from sqlmodel import Enum as SQLModelEnum
 class UserRoleEnum(str, PyEnum):
     STUDENT = "student"
     PROMOTER = "promoter"
+    # ADMIN is represented by is_superuser=True
 
 
 class StudyStageEnum(str, PyEnum):
@@ -31,14 +32,54 @@ class ThesisTopicStatusEnum(str, PyEnum):
     FULL = "full"
 
 
+# --- user ---
+
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
-    is_active: bool = True
-    is_superuser: bool = False
+    is_active: bool = Field(default=True)
+    is_superuser: bool = Field(default=False)
     full_name: str | None = Field(default=None, max_length=255)
     role: UserRoleEnum | None = Field(
         default=None, sa_column=Column(SQLModelEnum(UserRoleEnum), nullable=True)
+    )
+
+
+# Database model, database table inferred from class name
+class User(UserBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    hashed_password: str = Field(nullable=False)
+
+    # --- relationships ---
+    items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+
+    # one-to-one relationship to profile tables
+    student_profile: "StudentProfile | None" = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"uselist": False, "cascade_delete": True},
+    )
+    promoter_profile: "PromoterProfile | None" = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"uselist": False, "cascade_delete": True},
+    )
+
+    # if user is a promoter: they can author multiple thesis topics
+    thesis_topics_authored: list["ThesisTopic"] = Relationship(
+        back_populates="promoter",
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id==ThesisTopic.promoter_id",
+            "cascade_delete": True,
+        },
+    )
+
+    # if user is a student: they can apply to multiple thesis topics
+    thesis_applications_submitted: list["ThesisApplication"] = Relationship(
+        back_populates="student",
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id==ThesisApplication.student_id",
+            "cascade_delete": True,
+        },
     )
 
 
@@ -51,16 +92,19 @@ class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=40)
     full_name: str | None = Field(default=None, max_length=255)
+    role: UserRoleEnum = Field(
+        sa_column=Column(SQLModelEnum(UserRoleEnum), nullable=False)
+    )
 
 
 # Properties to receive via API on update, all are optional
-class UserUpdate(UserBase):
-    email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
-    password: str | None = Field(default=None, min_length=8, max_length=40)
+class UserUpdate(SQLModel):
+    email: EmailStr | None = Field(default=None, max_length=255)
+    is_active: bool | None = None
+    is_superuser: bool | None = None
     full_name: str | None = None
-    is_active: bool | None = None  # type: ignore
-    is_superuser: bool | None = None  # type: ignore
     role: UserRoleEnum | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=40)
 
 
 class UserUpdateMe(SQLModel):
@@ -73,34 +117,6 @@ class UpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=40)
 
 
-# Database model, database table inferred from class name
-class User(UserBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str
-    items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
-
-    # relationships
-    # one-to-one relationship to profile tables
-    student_profile: "StudentProfile" = Relationship(
-        back_populates="user", sa_relationship_kwargs={"uselist": False}
-    )
-    promoter_profile: "PromoterProfile" = Relationship(
-        back_populates="user", sa_relationship_kwargs={"uselist": False}
-    )
-
-    # if user is a promoter: they can author multiple thesis topics
-    thesis_topics_authored: list["ThesisTopic"] = Relationship(
-        back_populates="promoter",
-        sa_relationship_kwargs={"primaryjoin": "User.id==ThesisTopic.promoter_id"},
-    )
-
-    # if user is a student: they can apply to multiple thesis topics
-    thesis_applications_submitted: list["ThesisApplication"] = Relationship(
-        back_populates="student",
-        sa_relationship_kwargs={"primaryjoin": "User.id==ThesisApplication.student_id"},
-    )
-
-
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: uuid.UUID
@@ -109,6 +125,12 @@ class UserPublic(UserBase):
 class UsersPublic(SQLModel):
     data: list[UserPublic]
     count: int
+
+
+# --- end user ---
+
+
+# --- promoter profile ---
 
 
 class PromoterProfileBase(SQLModel):
@@ -144,6 +166,12 @@ class PromoterProfilesPublic(SQLModel):
     count: int
 
 
+# --- end promoter profile ---
+
+
+# --- student profile ---
+
+
 class StudentProfileBase(SQLModel):
     study_stage: StudyStageEnum | None = Field(
         default=None, sa_column=Column(SQLModelEnum(StudyStageEnum))
@@ -173,6 +201,12 @@ class StudentProfilePublic(StudentProfileBase):
 class StudentProfilesPublic(SQLModel):
     data: list[StudentProfilePublic]
     count: int
+
+
+# --- end student profile ---
+
+
+# --- thesis topic ---
 
 
 class ThesisTopicBase(SQLModel):
@@ -233,6 +267,12 @@ class ThesisTopicsPublic(SQLModel):
     count: int
 
 
+# --- end thesis topic ---
+
+
+# --- thesis application ---
+
+
 class ThesisApplicationBase(SQLModel):
     application_date: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
@@ -283,6 +323,12 @@ class ThesisApplicationsPublic(SQLModel):
     count: int
 
 
+# --- end thesis application ---
+
+
+# --- item ---
+
+
 # Shared properties
 class ItemBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
@@ -317,6 +363,9 @@ class ItemPublic(ItemBase):
 class ItemsPublic(SQLModel):
     data: list[ItemPublic]
     count: int
+
+
+# --- end item ---
 
 
 # Generic message
