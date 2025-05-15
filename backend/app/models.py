@@ -236,28 +236,26 @@ class StudentProfilesPublic(SQLModel):
 
 
 class ThesisTopicBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
+    title: str = Field(min_length=1, max_length=255, index=True)
     description: str | None = Field(default=None)
     target_study_stage: StudyStageEnum = Field(
-        sa_column=Column(SQLModelEnum(StudyStageEnum)), default=StudyStageEnum.ANY
+        default=StudyStageEnum.ANY,
+        sa_column=Column(SQLModelEnum(StudyStageEnum)),
     )
     slots_total: int = Field(default=1, ge=1)
     slots_available: int = Field(default=1, ge=0)
     status: ThesisTopicStatusEnum = Field(
-        sa_column=Column(SQLModelEnum(ThesisTopicStatusEnum)),
         default=ThesisTopicStatusEnum.OPEN,
+        sa_column=Column(SQLModelEnum(ThesisTopicStatusEnum)),
     )
+    language: str | None = Field(default=None, max_length=100)
+    department: str | None = Field(default=None, max_length=255)
+    keywords: list[str] = Field(default_factory=list)
 
 
 class ThesisTopic(ThesisTopicBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    promoter_id: uuid.UUID = Field(foreign_key="user.id")
-
-    promoter: User = Relationship(back_populates="thesis_topics_authored")
-    applications: list["ThesisApplication"] = Relationship(
-        back_populates="thesis_topic", cascade_delete=True
-    )
-
+    promoter_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc), nullable=False
     )
@@ -267,17 +265,28 @@ class ThesisTopic(ThesisTopicBase, table=True):
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
     )
 
+    # --- relationships ---
+    # one-to-many relationship to user table
+    promoter: "User" = Relationship(back_populates="thesis_topics_authored")
+    applications: list["ThesisApplication"] = Relationship(
+        back_populates="thesis_topic", cascade_delete=True
+    )
+
 
 class ThesisTopicCreate(ThesisTopicBase):
-    promoter_id: uuid.UUID | None = Field(default=None)
+    promoter_id: uuid.UUID
 
 
 class ThesisTopicUpdate(SQLModel):  # All fields optional for update
     title: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None)
-    target_study_stage: StudyStageEnum | None = None
+    target_study_stage: StudyStageEnum | None = Field(default=None)
     slots_total: int | None = Field(default=None, ge=1)
-    status: ThesisTopicStatusEnum | None = None
+    # slots_available: int | None = Field(default=None, ge=0)
+    status: ThesisTopicStatusEnum | None = Field(default=None)
+    language: str | None = Field(default=None, max_length=100)
+    department: str | None = Field(default=None, max_length=255)
+    keywords: list[str] | None = Field(default=None)
 
 
 class ThesisTopicPublic(ThesisTopicBase):
