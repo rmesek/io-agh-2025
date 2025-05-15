@@ -69,7 +69,7 @@ def create_user(
     if user:
         raise HTTPException(
             status_code=400,
-            detail="The user with this email already exists in the system.",
+            detail="The user with this email already exists in the system",
         )
 
     user = crud.create_user(session=session, user_create=user_in)
