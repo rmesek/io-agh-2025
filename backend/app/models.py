@@ -189,7 +189,7 @@ class PromoterProfilesPublic(SQLModel):
 
 class StudentProfileBase(SQLModel):
     study_stage: StudyStageEnum | None = Field(
-        default=None, sa_column=Column(SQLModelEnum(StudyStageEnum))
+        default=None, sa_column=Column(SQLModelEnum(StudyStageEnum), nullable=True)
     )
     year_of_study: int | None = Field(default=None, ge=1, le=7)
     department: str | None = Field(default=None, max_length=255)
@@ -277,7 +277,7 @@ class ThesisTopicCreate(ThesisTopicBase):
     promoter_id: uuid.UUID
 
 
-class ThesisTopicUpdate(SQLModel):  # All fields optional for update
+class ThesisTopicUpdate(SQLModel):
     title: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None)
     target_study_stage: StudyStageEnum | None = Field(default=None)
@@ -309,48 +309,65 @@ class ThesisTopicsPublic(SQLModel):
 
 
 class ThesisApplicationBase(SQLModel):
-    application_date: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-    )
     status: ApplicationStatusEnum = Field(
-        sa_column=Column(SQLModelEnum(ApplicationStatusEnum)),
         default=ApplicationStatusEnum.PENDING_APPROVAL,
+        sa_column=Column(SQLModelEnum(ApplicationStatusEnum)),
     )
+    student_message: str | None = Field(default=None, max_length=1000)
+    promoter_message: str | None = Field(default=None, max_length=1000)
+    resolved_at: datetime | None = Field(default=None, nullable=True)
 
 
 class ThesisApplication(ThesisApplicationBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     student_id: uuid.UUID = Field(foreign_key="user.id")
     thesis_topic_id: uuid.UUID = Field(foreign_key="thesistopic.id")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
-    promoter_id: uuid.UUID = Field(foreign_key="user.id")
-
+    # --- relationships ---
     student: User = Relationship(
         back_populates="thesis_applications_submitted",
         sa_relationship_kwargs={"foreign_keys": "[ThesisApplication.student_id]"},
     )
     thesis_topic: ThesisTopic = Relationship(back_populates="applications")
 
-    resolution_date: datetime | None = Field(default=None)
 
-
-class ThesisApplicationCreate(SQLModel):
+class ThesisApplicationCreate(ThesisApplicationBase):
+    student_id: uuid.UUID
     thesis_topic_id: uuid.UUID
-    student_id: uuid.UUID | None = Field(default=None)
+
+
+class ThesisApplicationStudentCreate(SQLModel):
+    thesis_topic_id: uuid.UUID
+    student_message: str | None = Field(default=None, max_length=1000)
 
 
 class ThesisApplicationUpdate(SQLModel):
-    status: ApplicationStatusEnum
+    status: ApplicationStatusEnum | None = Field(default=None)
+    student_message: str | None = Field(default=None, max_length=1000)
+    promoter_message: str | None = Field(default=None, max_length=1000)
+    resolved_at: datetime | None = Field(default=None, nullable=True)
+
+
+class ThesisApplicationPromoterUpdate(SQLModel):
+    promoter_message: str | None = Field(default=None, max_length=1000)
+    status: ApplicationStatusEnum | None = Field(default=None)
+
+
+class ThesisApplicationStudentUpdate(SQLModel):
+    student_message: str | None = Field(default=None, max_length=1000)
+    status: ApplicationStatusEnum | None = Field(default=None)
 
 
 class ThesisApplicationPublic(ThesisApplicationBase):
     id: uuid.UUID
     student_id: uuid.UUID
-    thesis_topic_id: uuid.UUID
-    promoter_id: uuid.UUID
     student: UserPublic | None = None
+    thesis_topic_id: uuid.UUID
     thesis_topic: ThesisTopicPublic | None = None
-    resolution_date: datetime | None
+    created_at: datetime
 
 
 class ThesisApplicationsPublic(SQLModel):
