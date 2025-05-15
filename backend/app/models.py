@@ -192,10 +192,20 @@ class StudentProfileBase(SQLModel):
         default=None, sa_column=Column(SQLModelEnum(StudyStageEnum))
     )
     year_of_study: int | None = Field(default=None, ge=1, le=7)
+    department: str | None = Field(default=None, max_length=255)
 
 
 class StudentProfile(StudentProfileBase, table=True):
-    user_id: uuid.UUID = Field(default=None, primary_key=True, foreign_key="user.id")
+    user_id: uuid.UUID = Field(
+        default=None,
+        primary_key=True,
+        foreign_key="user.id",
+        unique=True,
+        nullable=False,
+    )
+
+    # --- relationships ---
+    # one-to-one relationship to user table
     user: User = Relationship(back_populates="student_profile")
 
 
@@ -204,13 +214,14 @@ class StudentProfileCreate(StudentProfileBase):
 
 
 class StudentProfileUpdate(SQLModel):
-    study_stage: StudyStageEnum | None = None
+    study_stage: StudyStageEnum | None = Field(default=None)
     year_of_study: int | None = Field(default=None, ge=1, le=7)
+    department: str | None = Field(default=None, max_length=255)
 
 
 class StudentProfilePublic(StudentProfileBase):
     user_id: uuid.UUID
-    user: UserPublic | None = None
+    user: UserPublic | None = Field(default=None)
 
 
 class StudentProfilesPublic(SQLModel):
