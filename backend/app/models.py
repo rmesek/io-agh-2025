@@ -100,10 +100,12 @@ class UserRegister(SQLModel):
 # Properties to receive via API on update, all are optional
 class UserUpdate(SQLModel):
     email: EmailStr | None = Field(default=None, max_length=255)
-    is_active: bool | None = None
-    is_superuser: bool | None = None
-    full_name: str | None = None
-    role: UserRoleEnum | None = None
+    is_active: bool | None = Field(default=None)
+    is_superuser: bool | None = Field(default=None)
+    full_name: str | None = Field(default=None, max_length=255)
+    role: UserRoleEnum | None = Field(
+        default=None, sa_column=Column(SQLModelEnum(UserRoleEnum), nullable=True)
+    )
     password: str | None = Field(default=None, min_length=8, max_length=40)
 
 
@@ -138,11 +140,22 @@ class PromoterProfileBase(SQLModel):
     can_supervise_bachelor: bool = Field(default=False)
     can_supervise_master: bool = Field(default=False)
     student_limit: int = Field(default=5, ge=0)
+    department: str | None = Field(default=None, max_length=255)
+    research_interests: list[str] = Field(default_factory=list)
 
 
 class PromoterProfile(PromoterProfileBase, table=True):
-    user_id: uuid.UUID = Field(default=None, primary_key=True, foreign_key="user.id")
-    user: User = Relationship(back_populates="promoter_profile")
+    user_id: uuid.UUID = Field(
+        default=None,
+        primary_key=True,
+        foreign_key="user.id",
+        unique=True,
+        nullable=False,
+    )
+
+    # --- relationships ---
+    # one-to-one relationship to user table
+    user: "User" = Relationship(back_populates="promoter_profile")
 
 
 class PromoterProfileCreate(PromoterProfileBase):
@@ -150,15 +163,17 @@ class PromoterProfileCreate(PromoterProfileBase):
 
 
 class PromoterProfileUpdate(SQLModel):
-    academic_degree: str | None = None
-    can_supervise_bachelor: bool | None = None
-    can_supervise_master: bool | None = None
+    academic_degree: str | None = Field(default=None, max_length=100)
+    can_supervise_bachelor: bool | None = Field(default=None)
+    can_supervise_master: bool | None = Field(default=None)
     student_limit: int | None = Field(default=None, ge=0)
+    department: str | None = Field(default=None, max_length=255)
+    research_interests: list[str] | None = Field(default=None)
 
 
 class PromoterProfilePublic(PromoterProfileBase):
     user_id: uuid.UUID
-    user: UserPublic | None = None
+    user: UserPublic | None = Field(default=None)
 
 
 class PromoterProfilesPublic(SQLModel):
