@@ -11,7 +11,7 @@ from sqlmodel import Session
 from app.core import security
 from app.core.config import settings
 from app.core.db import engine
-from app.models import TokenPayload, User, UserRoleEnum
+from app.models import PromoterProfile, StudentProfile, TokenPayload, User, UserRoleEnum
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -57,13 +57,29 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
     return current_user
 
 
-def get_current_active_student(current_user: CurrentUser) -> User:
+def get_current_active_student(
+    session: SessionDep, current_user: CurrentUser
+) -> StudentProfile:
     if current_user.role != UserRoleEnum.STUDENT:
         raise HTTPException(status_code=403, detail="User is not a student")
-    return current_user
+    student_profile = session.get(StudentProfile, current_user.id)
+    if not student_profile:
+        raise HTTPException(status_code=404, detail="Student profile is not set")
+    return student_profile
 
 
-def get_current_active_promoter(current_user: CurrentUser) -> User:
+CurrentStudent = Annotated[StudentProfile, Depends(get_current_active_student)]
+
+
+def get_current_active_promoter(
+    session: SessionDep, current_user: CurrentUser
+) -> PromoterProfile:
     if current_user.role != UserRoleEnum.PROMOTER:
         raise HTTPException(status_code=403, detail="User is not a promoter")
-    return current_user
+    promoter_profile = session.get(PromoterProfile, current_user.id)
+    if not promoter_profile:
+        raise HTTPException(status_code=404, detail="Promoter profile is not set")
+    return promoter_profile
+
+
+CurrentPromoter = Annotated[PromoterProfile, Depends(get_current_active_promoter)]
