@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from enum import Enum as PyEnum
 
 from pydantic import EmailStr
-from sqlmodel import Column, Field, Relationship, SQLModel
+from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 from sqlmodel import Enum as SQLModelEnum
 
 
@@ -55,31 +55,29 @@ class User(UserBase, table=True):
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
     # one-to-one relationship to profile tables
-    student_profile: "StudentProfile | None" = Relationship(
+    student_profile: "StudentProfile" = Relationship(
         back_populates="user",
-        sa_relationship_kwargs={"uselist": False, "cascade_delete": True},
+        sa_relationship_kwargs={"uselist": False},
+        cascade_delete=True,
     )
-    promoter_profile: "PromoterProfile | None" = Relationship(
+    promoter_profile: "PromoterProfile" = Relationship(
         back_populates="user",
-        sa_relationship_kwargs={"uselist": False, "cascade_delete": True},
+        sa_relationship_kwargs={"uselist": False},
+        cascade_delete=True,
     )
 
     # if user is a promoter: they can author multiple thesis topics
     thesis_topics_authored: list["ThesisTopic"] = Relationship(
         back_populates="promoter",
-        sa_relationship_kwargs={
-            "primaryjoin": "User.id==ThesisTopic.promoter_id",
-            "cascade_delete": True,
-        },
+        sa_relationship_kwargs={"primaryjoin": "User.id==ThesisTopic.promoter_id"},
+        cascade_delete=True,
     )
 
     # if user is a student: they can apply to multiple thesis topics
     thesis_applications_submitted: list["ThesisApplication"] = Relationship(
         back_populates="student",
-        sa_relationship_kwargs={
-            "primaryjoin": "User.id==ThesisApplication.student_id",
-            "cascade_delete": True,
-        },
+        sa_relationship_kwargs={"primaryjoin": "User.id==ThesisApplication.student_id"},
+        cascade_delete=True,
     )
 
 
@@ -141,7 +139,7 @@ class PromoterProfileBase(SQLModel):
     can_supervise_master: bool = Field(default=False)
     student_limit: int = Field(default=5, ge=0)
     department: str | None = Field(default=None, max_length=255)
-    research_interests: list[str] = Field(default_factory=list)
+    research_interests: list[str] = Field(default_factory=list, sa_column=Column(JSON))
 
 
 class PromoterProfile(PromoterProfileBase, table=True):
@@ -250,7 +248,7 @@ class ThesisTopicBase(SQLModel):
     )
     language: str | None = Field(default=None, max_length=100)
     department: str | None = Field(default=None, max_length=255)
-    keywords: list[str] = Field(default_factory=list)
+    keywords: list[str] = Field(default_factory=list, sa_column=Column(JSON))
 
 
 class ThesisTopic(ThesisTopicBase, table=True):
