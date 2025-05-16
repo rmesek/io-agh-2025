@@ -15,6 +15,7 @@ from app.api.deps import (
 from app.models import (
     Message,
     PromoterProfile,
+    StudyStageEnum,
     ThesisTopic,
     ThesisTopicCreate,
     ThesisTopicCreateMe,
@@ -24,6 +25,8 @@ from app.models import (
 )
 
 router = APIRouter(prefix="/thesis-topics", tags=["thesis-topics"])
+
+# TODO: student limit per promoter is not implemented yet
 
 
 @router.get(
@@ -80,6 +83,22 @@ def create_thesis_topic_me(
         raise HTTPException(
             status_code=400,
             detail="The thesis topic with this title already exists for the current user",
+        )
+    if (
+        thesis_topic_in.target_study_stage == StudyStageEnum.MASTER
+        and not current_promoter.can_supervise_master
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="The current user cannot supervise master thesis topics",
+        )
+    if (
+        thesis_topic_in.target_study_stage == StudyStageEnum.BACHELOR
+        and not current_promoter.can_supervise_bachelor
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="The current user cannot supervise bachelor thesis topics",
         )
     thesis_topic = crud.create_thesis_topic_me(
         session=session,
@@ -185,6 +204,23 @@ def update_thesis_topic(
         raise HTTPException(status_code=404, detail="Thesis topic not found")
     if not current_user.is_superuser and (current_user.id != thesis_topic.promoter_id):
         raise HTTPException(status_code=400, detail="Not enough permissions")
+    if not current_user.is_superuser:
+        if (
+            thesis_topic_in.target_study_stage == StudyStageEnum.MASTER
+            and not current_user.promoter_profile.can_supervise_master
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="The current user cannot supervise master thesis topics",
+            )
+        if (
+            thesis_topic_in.target_study_stage == StudyStageEnum.BACHELOR
+            and not current_user.promoter_profile.can_supervise_bachelor
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="The current user cannot supervise bachelor thesis topics",
+            )
     db_thesis_topic = crud.update_thesis_topic(
         session=session, db_thesis_topic=thesis_topic, thesis_topic_in=thesis_topic_in
     )
