@@ -29,7 +29,6 @@ class ApplicationStatusEnum(str, PyEnum):
 class ThesisTopicStatusEnum(str, PyEnum):
     OPEN = "open"
     CLOSED = "closed"
-    FULL = "full"
 
 
 # --- user ---
@@ -349,6 +348,11 @@ class ThesisApplicationCreate(ThesisApplicationBase):
     thesis_topic_id: uuid.UUID
 
 
+class ThesisApplicationCreateStudent(SQLModel):
+    thesis_topic_id: uuid.UUID
+    student_message: str | None = Field(default=None, max_length=1000)
+
+
 class ThesisApplicationStudentCreate(SQLModel):
     thesis_topic_id: uuid.UUID
     student_message: str | None = Field(default=None, max_length=1000)
@@ -361,12 +365,12 @@ class ThesisApplicationUpdate(SQLModel):
     resolved_at: datetime | None = Field(default=None, nullable=True)
 
 
-class ThesisApplicationPromoterUpdate(SQLModel):
+class ThesisApplicationUpdatePromoter(SQLModel):
     promoter_message: str | None = Field(default=None, max_length=1000)
     status: ApplicationStatusEnum | None = Field(default=None)
 
 
-class ThesisApplicationStudentUpdate(SQLModel):
+class ThesisApplicationUpdateStudent(SQLModel):
     student_message: str | None = Field(default=None, max_length=1000)
     status: ApplicationStatusEnum | None = Field(default=None)
 
