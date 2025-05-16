@@ -126,6 +126,11 @@ def create_student_profile(
     """
     Create new student profile.
     """
+    user = session.get(StudentProfile, student_profile_in.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=400, detail="The user with this ID does not exist"
+        )
     student_profile = crud.create_student_profile(
         session=session, student_profile_create=student_profile_in
     )
