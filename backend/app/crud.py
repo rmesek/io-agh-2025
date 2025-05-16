@@ -15,6 +15,10 @@ from app.models import (
     StudentProfileCreate,
     StudentProfileCreateMe,
     StudentProfileUpdate,
+    ThesisTopic,
+    ThesisTopicCreate,
+    ThesisTopicCreateMe,
+    ThesisTopicUpdate,
     User,
     UserCreate,
     UserUpdate,
@@ -163,3 +167,57 @@ def update_student_profile(
 
 #     session.refresh(db_user)
 #     return db_user
+
+
+def create_thesis_topic(
+    *, session: Session, thesis_topic_create: ThesisTopicCreate
+) -> ThesisTopic:
+    db_obj = ThesisTopic.model_validate(thesis_topic_create)
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def get_thesis_topic_by_title_and_promoter(
+    *,
+    session: Session,
+    title: str,
+    promoter_id: uuid.UUID,
+) -> ThesisTopic | None:
+    existing_topic = session.exec(
+        select(ThesisTopic).where(
+            ThesisTopic.title == title,
+            ThesisTopic.promoter_id == promoter_id,
+        )
+    ).first()
+    return existing_topic
+
+
+def create_thesis_topic_me(
+    *,
+    session: Session,
+    thesis_topic_create: ThesisTopicCreateMe,
+    user_id: uuid.UUID,
+) -> ThesisTopic:
+    db_obj = ThesisTopic.model_validate(
+        thesis_topic_create, update={"promoter_id": user_id}
+    )
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def update_thesis_topic(
+    *,
+    session: Session,
+    db_thesis_topic: ThesisTopic,
+    thesis_topic_in: ThesisTopicUpdate,
+) -> Any:
+    thesis_topic_data = thesis_topic_in.model_dump(exclude_unset=True)
+    db_thesis_topic.sqlmodel_update(thesis_topic_data)
+    session.add(db_thesis_topic)
+    session.commit()
+    session.refresh(db_thesis_topic)
+    return db_thesis_topic
