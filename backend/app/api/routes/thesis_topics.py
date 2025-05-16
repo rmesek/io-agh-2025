@@ -185,10 +185,10 @@ def update_thesis_topic(
         raise HTTPException(status_code=404, detail="Thesis topic not found")
     if not current_user.is_superuser and (current_user.id != thesis_topic.promoter_id):
         raise HTTPException(status_code=400, detail="Not enough permissions")
-    thesis_topic_data = crud.update_thesis_topic(
+    db_thesis_topic = crud.update_thesis_topic(
         session=session, db_thesis_topic=thesis_topic, thesis_topic_in=thesis_topic_in
     )
-    return thesis_topic_data
+    return db_thesis_topic
 
 
 @router.delete(
