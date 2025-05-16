@@ -126,6 +126,11 @@ def create_promoter_profile(
     """
     Create new promoter profile.
     """
+    user = session.get(PromoterProfile, promoter_profile_in.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=400, detail="The user with this ID does not exist"
+        )
     promoter_profile = crud.create_promoter_profile(
         session=session, promoter_profile_create=promoter_profile_in
     )
