@@ -417,6 +417,17 @@ def delete_thesis_application(
             status_code=403,
             detail="You do not have permission to access this thesis application",
         )
+    if thesis_application.status == ApplicationStatusEnum.APPROVED_BY_PROMOTER:
+        thesis_topic = session.get(ThesisTopic, thesis_application.thesis_topic_id)
+        if not thesis_topic:
+            raise HTTPException(
+                status_code=404,
+                detail="The thesis topic with this id does not exist",
+            )
+        thesis_topic.slots_available = min(
+            thesis_topic.slots_total, thesis_topic.slots_available + 1
+        )
+        session.add(thesis_topic)
     session.delete(thesis_application)
     session.commit()
     return thesis_application
