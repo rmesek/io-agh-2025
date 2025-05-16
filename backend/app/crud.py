@@ -79,9 +79,14 @@ def create_promoter_profile(
 
 
 def create_promoter_profile_me(
-    *, session: Session, promoter_profile_create: PromoterProfileCreateMe
+    *,
+    session: Session,
+    promoter_profile_create: PromoterProfileCreateMe,
+    user_id: uuid.UUID,
 ) -> PromoterProfile:
-    db_obj = PromoterProfile.model_validate(promoter_profile_create)
+    db_obj = PromoterProfile.model_validate(
+        promoter_profile_create, update={"user_id": user_id}
+    )
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
@@ -113,9 +118,14 @@ def create_student_profile(
 
 
 def create_student_profile_me(
-    *, session: Session, student_profile_create: StudentProfileCreateMe
+    *,
+    session: Session,
+    student_profile_create: StudentProfileCreateMe,
+    user_id: uuid.UUID,
 ) -> StudentProfile:
-    db_obj = StudentProfile.model_validate(student_profile_create)
+    db_obj = StudentProfile.model_validate(
+        student_profile_create, update={"user_id": user_id}
+    )
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
