@@ -48,7 +48,9 @@ def create_promoter_profile_me(
             status_code=409, detail="A promoter profile already exists for this user"
         )
     promoter_profile = crud.create_promoter_profile_me(
-        session=session, promoter_profile_create=promoter_profile_in
+        session=session,
+        promoter_profile_create=promoter_profile_in,
+        user_id=current_user.id,
     )
     return promoter_profile
 
@@ -58,6 +60,7 @@ def create_promoter_profile_me(
     response_model=PromoterProfilePublic,
 )
 def read_promoter_profile_me(
+    *,
     current_promoter: CurrentPromoter,
 ) -> Any:
     """
