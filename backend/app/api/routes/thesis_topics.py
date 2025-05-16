@@ -1,24 +1,132 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import func, select
 
-from app.api.deps import CurrentUser, SessionDep
+from app import crud
+from app.api.deps import (
+    CurrentPromoter,
+    CurrentUser,
+    SessionDep,
+    get_current_active_superuser,
+    get_current_user,
+)
 from app.models import (
+    Message,
     PromoterProfile,
     ThesisTopic,
     ThesisTopicCreate,
+    ThesisTopicCreateMe,
     ThesisTopicPublic,
     ThesisTopicsPublic,
-    UserRoleEnum,
+    ThesisTopicUpdate,
 )
 
 router = APIRouter(prefix="/thesis-topics", tags=["thesis-topics"])
 
 
 @router.get(
+    "/me",
+    response_model=ThesisTopicsPublic,
+)
+def read_thesis_topics_me(
+    *,
+    session: SessionDep,
+    current_promoter: CurrentPromoter,
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Retrieve thesis topics.
+    """
+    count_statement = (
+        select(func.count())
+        .select_from(ThesisTopic)
+        .where(ThesisTopic.promoter_id == current_promoter.user_id)
+    )
+    count = session.exec(count_statement).one()
+
+    statement = (
+        select(ThesisTopic)
+        .where(ThesisTopic.promoter_id == current_promoter.user_id)
+        .offset(skip)
+        .limit(limit)
+    )
+    thesis_topics = session.exec(statement).all()
+
+    return ThesisTopicsPublic(data=thesis_topics, count=count)  # type: ignore
+
+
+@router.post(
+    "/me",
+    response_model=ThesisTopicPublic,
+)
+def create_thesis_topic_me(
+    *,
+    session: SessionDep,
+    current_promoter: CurrentPromoter,
+    thesis_topic_in: ThesisTopicCreateMe,
+) -> Any:
+    """
+    Create new thesis topic for the current user.
+    """
+    existing_topic = crud.get_thesis_topic_by_title_and_promoter(
+        session=session,
+        title=thesis_topic_in.title,
+        promoter_id=current_promoter.user_id,
+    )
+    if existing_topic:
+        raise HTTPException(
+            status_code=400,
+            detail="The thesis topic with this title already exists for the current user",
+        )
+    thesis_topic = crud.create_thesis_topic_me(
+        session=session,
+        thesis_topic_create=thesis_topic_in,
+        user_id=current_promoter.user_id,
+    )
+    return thesis_topic
+
+
+@router.post(
     "/",
+    dependencies=[Depends(get_current_active_superuser)],
+    response_model=ThesisTopicPublic,
+)
+def create_thesis_topic(
+    *,
+    session: SessionDep,
+    thesis_topic_in: ThesisTopicCreate,
+) -> Any:
+    """
+    Create new thesis topic.
+    """
+    existing_topic = crud.get_thesis_topic_by_title_and_promoter(
+        session=session,
+        title=thesis_topic_in.title,
+        promoter_id=thesis_topic_in.promoter_id,
+    )
+    if existing_topic:
+        raise HTTPException(
+            status_code=400,
+            detail="The thesis topic with this title already exists for the current user",
+        )
+    promoter_profile = session.get(PromoterProfile, thesis_topic_in.promoter_id)
+    if not promoter_profile:
+        raise HTTPException(
+            status_code=400,
+            detail="The promoter profile does not exist for this user ID",
+        )
+    thesis_topic = crud.create_thesis_topic(
+        session=session, thesis_topic_create=thesis_topic_in
+    )
+    return thesis_topic
+
+
+@router.get(
+    "/",
+    dependencies=[Depends(get_current_user)],
     response_model=ThesisTopicsPublic,
 )
 def read_thesis_topics(
@@ -39,71 +147,68 @@ def read_thesis_topics(
     return ThesisTopicsPublic(data=thesis_topics, count=count)  # type: ignore
 
 
-@router.post(
-    "/",
-    response_model=ThesisTopicPublic,
-)
-def create_thesis_topic(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    thesis_topic_in: ThesisTopicCreate,
-) -> Any:
-    """
-    Create new thesis topic.
-    """
-    promoter_id: uuid.UUID
-    if current_user.is_superuser:
-        if not thesis_topic_in.promoter_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Promoter ID must be provided for superuser.",
-            )
-        promoter = session.get(PromoterProfile, thesis_topic_in.promoter_id)
-        if not promoter:
-            raise HTTPException(
-                status_code=404,
-                detail="Promoter not found.",
-            )
-        promoter_id = thesis_topic_in.promoter_id
-    elif current_user.role == UserRoleEnum.PROMOTER:
-        promoter_id = current_user.id
-    else:
-        raise HTTPException(
-            status_code=403,
-            detail="Only superuser or promoter can create thesis topics.",
-        )
-
-    promoter_profile = session.exec(
-        select(PromoterProfile).where(PromoterProfile.user_id == promoter_id)
-    ).first()
-    if not promoter_profile:
-        raise HTTPException(
-            status_code=403,
-            detail="Promoter profile not found.",
-        )
-    thesis_topic = ThesisTopic.model_validate(
-        thesis_topic_in, update={"promoter_id": promoter_profile.user_id}
-    )
-    session.add(thesis_topic)
-    session.commit()
-    session.refresh(thesis_topic)
-    return thesis_topic
-
-
 @router.get(
-    "/{topic_id}",
+    "/{id}",
+    dependencies=[Depends(get_current_user)],
     response_model=ThesisTopicPublic,
 )
 def read_thesis_topic(
     *,
-    topic_id: uuid.UUID,
     session: SessionDep,
+    id: uuid.UUID,
 ) -> Any:
     """
     Get thesis topic by ID.
     """
-    thesis_topic = session.get(ThesisTopic, topic_id)
+    thesis_topic = session.get(ThesisTopic, id)
     if not thesis_topic:
         raise HTTPException(status_code=404, detail="Thesis topic not found")
     return thesis_topic
+
+
+@router.patch(
+    "/{id}",
+    response_model=ThesisTopicPublic,
+)
+def update_thesis_topic(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    thesis_id: uuid.UUID,
+    thesis_topic_in: ThesisTopicUpdate,
+) -> Any:
+    """
+    Update a thesis topic.
+    """
+    thesis_topic = session.get(ThesisTopic, thesis_id)
+    if not thesis_topic:
+        raise HTTPException(status_code=404, detail="Thesis topic not found")
+    if not current_user.is_superuser and (current_user.id != thesis_topic.promoter_id):
+        raise HTTPException(status_code=400, detail="Not enough permissions")
+    thesis_topic_data = crud.update_thesis_topic(
+        session=session, db_thesis_topic=thesis_topic, thesis_topic_in=thesis_topic_in
+    )
+    return thesis_topic_data
+
+
+@router.delete(
+    "/{id}",
+    response_model=Message,
+)
+def delete_thesis_topic(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    thesis_id: uuid.UUID,
+) -> Any:
+    """
+    Delete a thesis topic.
+    """
+    thesis_topic = session.get(ThesisTopic, thesis_id)
+    if not thesis_topic:
+        raise HTTPException(status_code=404, detail="Thesis topic not found")
+    if not current_user.is_superuser and (current_user.id != thesis_topic.promoter_id):
+        raise HTTPException(status_code=400, detail="Not enough permissions")
+    session.delete(thesis_topic)
+    session.commit()
+    return Message(message="Thesis topic deleted successfully")
