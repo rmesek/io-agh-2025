@@ -283,6 +283,10 @@ class ThesisTopicCreate(ThesisTopicBase):
     promoter_id: uuid.UUID
 
 
+class ThesisTopicCreateMe(ThesisTopicBase):
+    pass
+
+
 class ThesisTopicUpdate(SQLModel):
     title: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None)
