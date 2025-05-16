@@ -15,6 +15,11 @@ from app.models import (
     StudentProfileCreate,
     StudentProfileCreateMe,
     StudentProfileUpdate,
+    ThesisApplication,
+    ThesisApplicationCreate,
+    ThesisApplicationCreateStudent,
+    ThesisApplicationUpdate,
+    ThesisApplicationUpdatePromoter,
     ThesisTopic,
     ThesisTopicCreate,
     ThesisTopicCreateMe,
@@ -179,6 +184,13 @@ def create_thesis_topic(
     return db_obj
 
 
+def get_thesis_topic_by_id(
+    *, session: Session, topic_id: uuid.UUID
+) -> ThesisTopic | None:
+    existing_topic = session.get(ThesisTopic, topic_id)
+    return existing_topic
+
+
 def get_thesis_topic_by_title_and_promoter(
     *,
     session: Session,
@@ -221,3 +233,73 @@ def update_thesis_topic(
     session.commit()
     session.refresh(db_thesis_topic)
     return db_thesis_topic
+
+
+def get_thesis_application_by_topic_and_student(
+    *,
+    session: Session,
+    topic_id: uuid.UUID,
+    student_id: uuid.UUID,
+) -> ThesisApplication | None:
+    existing_application = session.exec(
+        select(ThesisApplication).where(
+            ThesisApplication.thesis_topic_id == topic_id,
+            ThesisApplication.student_id == student_id,
+        )
+    ).first()
+    return existing_application
+
+
+def create_thesis_application_student(
+    *,
+    session: Session,
+    thesis_application_create: ThesisApplicationCreateStudent,
+    user_id: uuid.UUID,
+) -> ThesisApplication:
+    db_obj = ThesisApplication.model_validate(
+        thesis_application_create, update={"student_id": user_id}
+    )
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def create_thesis_application(
+    *,
+    session: Session,
+    thesis_application_create: ThesisApplicationCreate,
+) -> ThesisApplication:
+    db_obj = ThesisApplication.model_validate(thesis_application_create)
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj
+
+
+def update_thesis_application(
+    *,
+    session: Session,
+    db_thesis_application: ThesisApplication,
+    thesis_application_in: ThesisApplicationUpdate,
+) -> Any:
+    thesis_application_data = thesis_application_in.model_dump(exclude_unset=True)
+    db_thesis_application.sqlmodel_update(thesis_application_data)
+    session.add(db_thesis_application)
+    session.commit()
+    session.refresh(db_thesis_application)
+    return db_thesis_application
+
+
+def update_thesis_application_promoter(
+    *,
+    session: Session,
+    db_thesis_application: ThesisApplication,
+    thesis_application_in: ThesisApplicationUpdatePromoter,
+) -> Any:
+    thesis_application_data = thesis_application_in.model_dump(exclude_unset=True)
+    db_thesis_application.sqlmodel_update(thesis_application_data)
+    session.add(db_thesis_application)
+    session.commit()
+    session.refresh(db_thesis_application)
+    return db_thesis_application
