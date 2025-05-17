@@ -18,6 +18,7 @@ from app.models import (
     StudentProfilePublic,
     StudentProfilesPublic,
     StudentProfileUpdate,
+    User,
     UserRoleEnum,
 )
 
@@ -129,10 +130,20 @@ def create_student_profile(
     """
     Create new student profile.
     """
-    user = session.get(StudentProfile, student_profile_in.user_id)
+    user = session.get(User, student_profile_in.user_id)
     if not user:
         raise HTTPException(
             status_code=400, detail="The user with this ID does not exist"
+        )
+    if user.role != UserRoleEnum.STUDENT:
+        raise HTTPException(
+            status_code=400, detail="The user does not have the 'student' role"
+        )
+
+    student_profile = session.get(StudentProfile, student_profile_in.user_id)
+    if student_profile:
+        raise HTTPException(
+            status_code=409, detail="A student profile already exists for this user"
         )
     student_profile = crud.create_student_profile(
         session=session, student_profile_create=student_profile_in

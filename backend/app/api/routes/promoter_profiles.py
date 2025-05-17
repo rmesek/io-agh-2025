@@ -18,6 +18,7 @@ from app.models import (
     PromoterProfilePublic,
     PromoterProfilesPublic,
     PromoterProfileUpdate,
+    User,
     UserRoleEnum,
 )
 
@@ -129,10 +130,20 @@ def create_promoter_profile(
     """
     Create new promoter profile.
     """
-    user = session.get(PromoterProfile, promoter_profile_in.user_id)
+    user = session.get(User, promoter_profile_in.user_id)
     if not user:
         raise HTTPException(
             status_code=400, detail="The user with this ID does not exist"
+        )
+    if user.role != UserRoleEnum.PROMOTER:
+        raise HTTPException(
+            status_code=400, detail="The user does not have the 'promoter' role"
+        )
+
+    promoter_profile = session.get(PromoterProfile, promoter_profile_in.user_id)
+    if promoter_profile:
+        raise HTTPException(
+            status_code=409, detail="A promoter profile already exists for this user"
         )
     promoter_profile = crud.create_promoter_profile(
         session=session, promoter_profile_create=promoter_profile_in
