@@ -109,8 +109,11 @@ def read_promoter_profiles(
 
     statement = select(PromoterProfile).offset(skip).limit(limit)
     promoters = session.exec(statement).all()
+    promoters_public = [
+        PromoterProfilePublic.model_validate(promoter) for promoter in promoters
+    ]
 
-    return PromoterProfilesPublic(data=promoters, count=count)  # type: ignore
+    return PromoterProfilesPublic(data=promoters_public, count=count)
 
 
 @router.post(
