@@ -49,7 +49,7 @@ def read_thesis_applications_student(
         .select_from(ThesisApplication)
         .where(ThesisApplication.student_id == current_student.user_id)
     )
-    count_statement = session.exec(count_statement).one()
+    count = session.exec(count_statement).one()
 
     statement = (
         select(ThesisApplication)
@@ -59,7 +59,7 @@ def read_thesis_applications_student(
     )
     thesis_applications = session.exec(statement).all()
 
-    return ThesisApplicationsPublic(data=thesis_applications, count=count_statement)  # type: ignore
+    return ThesisApplicationsPublic(data=thesis_applications, count=count)  # type: ignore
 
 
 @router.post(
