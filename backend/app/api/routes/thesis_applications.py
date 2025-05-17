@@ -58,8 +58,12 @@ def read_thesis_applications_student(
         .limit(limit)
     )
     thesis_applications = session.exec(statement).all()
+    thesis_applications_public = [
+        ThesisApplicationPublic.model_validate(thesis_application)
+        for thesis_application in thesis_applications
+    ]
 
-    return ThesisApplicationsPublic(data=thesis_applications, count=count)  # type: ignore
+    return ThesisApplicationsPublic(data=thesis_applications_public, count=count)
 
 
 @router.post(
@@ -148,8 +152,12 @@ def read_thesis_applications_promoter(
         .limit(limit)
     )
     thesis_applications = session.exec(statement).all()
+    thesis_applications_public = [
+        ThesisApplicationPublic.model_validate(thesis_application)
+        for thesis_application in thesis_applications
+    ]
 
-    return ThesisApplicationsPublic(data=thesis_applications, count=count)  # type: ignore
+    return ThesisApplicationsPublic(data=thesis_applications_public, count=count)
 
 
 @router.get(
@@ -171,8 +179,12 @@ def read_thesis_applications(
 
     statement = select(ThesisApplication).offset(skip).limit(limit)
     thesis_applications = session.exec(statement).all()
+    thesis_applications_public = [
+        ThesisApplicationPublic.model_validate(thesis_application)
+        for thesis_application in thesis_applications
+    ]
 
-    return ThesisApplicationsPublic(data=thesis_applications, count=count)  # type: ignore
+    return ThesisApplicationsPublic(data=thesis_applications_public, count=count)
 
 
 @router.post(

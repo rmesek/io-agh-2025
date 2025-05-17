@@ -109,8 +109,11 @@ def read_student_profiles(
 
     statement = select(StudentProfile).offset(skip).limit(limit)
     students = session.exec(statement).all()
+    students_public = [
+        StudentProfilePublic.model_validate(student) for student in students
+    ]
 
-    return StudentProfilesPublic(data=students, count=count)  # type: ignore
+    return StudentProfilesPublic(data=students_public, count=count)
 
 
 @router.post(

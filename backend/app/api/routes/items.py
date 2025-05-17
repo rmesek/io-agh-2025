@@ -37,8 +37,9 @@ def read_items(
             .limit(limit)
         )
         items = session.exec(statement).all()
+    items_public = [ItemPublic.model_validate(item) for item in items]
 
-    return ItemsPublic(data=items, count=count)  # type: ignore
+    return ItemsPublic(data=items_public, count=count)
 
 
 @router.get("/{id}", response_model=ItemPublic)
