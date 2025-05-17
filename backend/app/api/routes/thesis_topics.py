@@ -57,8 +57,11 @@ def read_thesis_topics_me(
         .limit(limit)
     )
     thesis_topics = session.exec(statement).all()
+    thesis_topics_public = [
+        ThesisTopicPublic.model_validate(thesis_topic) for thesis_topic in thesis_topics
+    ]
 
-    return ThesisTopicsPublic(data=thesis_topics, count=count)  # type: ignore
+    return ThesisTopicsPublic(data=thesis_topics_public, count=count)
 
 
 @router.post(
@@ -162,8 +165,11 @@ def read_thesis_topics(
 
     statement = select(ThesisTopic).offset(skip).limit(limit)
     thesis_topics = session.exec(statement).all()
+    thesis_topics_public = [
+        ThesisTopicPublic.model_validate(thesis_topic) for thesis_topic in thesis_topics
+    ]
 
-    return ThesisTopicsPublic(data=thesis_topics, count=count)  # type: ignore
+    return ThesisTopicsPublic(data=thesis_topics_public, count=count)
 
 
 @router.get(
