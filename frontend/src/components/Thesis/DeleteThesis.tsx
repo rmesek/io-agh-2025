@@ -26,8 +26,8 @@ const DeleteThesis = ({ id }: { id: string }) => {
     formState: { isSubmitting },
   } = useForm()
 
-  const deleteThesis = async (id: string) => {
-    await ThesisService.deleteThesisTopic({ id: id })
+  const deleteThesis = async () => {
+    await ThesisService.deleteThesisTopic({ id })
   }
 
   const mutation = useMutation({
@@ -45,7 +45,7 @@ const DeleteThesis = ({ id }: { id: string }) => {
   })
 
   const onSubmit = async () => {
-    mutation.mutate(id)
+    mutation.mutate()
   }
 
   return (
@@ -77,15 +77,11 @@ const DeleteThesis = ({ id }: { id: string }) => {
           </DialogBody>
 
           <DialogFooter gap={2}>
-            <DialogActionTrigger asChild>
-              <Button
-                variant="subtle"
-                colorPalette="gray"
-                disabled={isSubmitting}
-              >
+            <DialogCloseTrigger asChild>
+              <Button variant="subtle" colorPalette="gray" disabled={isSubmitting}>
                 Cancel
               </Button>
-            </DialogActionTrigger>
+            </DialogCloseTrigger>
             <Button
               variant="solid"
               colorPalette="red"

@@ -199,13 +199,13 @@ def update_thesis_topic(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    thesis_id: uuid.UUID,
+    id: uuid.UUID,                 
     thesis_topic_in: ThesisTopicUpdate,
 ) -> Any:
     """
     Update a thesis topic.
     """
-    thesis_topic = session.get(ThesisTopic, thesis_id)
+    thesis_topic = session.get(ThesisTopic, id) 
     if not thesis_topic:
         raise HTTPException(status_code=404, detail="Thesis topic not found")
     if not current_user.is_superuser and (current_user.id != thesis_topic.promoter_id):
@@ -241,12 +241,12 @@ def delete_thesis_topic(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    thesis_id: uuid.UUID,
+    id: uuid.UUID,
 ) -> Any:
     """
     Delete a thesis topic.
     """
-    thesis_topic = session.get(ThesisTopic, thesis_id)
+    thesis_topic = session.get(ThesisTopic, id)
     if not thesis_topic:
         raise HTTPException(status_code=404, detail="Thesis topic not found")
     if not current_user.is_superuser and (current_user.id != thesis_topic.promoter_id):

@@ -8,11 +8,10 @@ import {
   Button,
   Text,
 } from "@chakra-ui/react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
-import { useQueryClient } from "@tanstack/react-query"
 import {
   ThesisService,
   type ThesisTopicPublic,
@@ -37,28 +36,13 @@ const PER_PAGE = 10
 function getThesisQueryOptions({ page }: { page: number }) {
   return {
     queryFn: async () => {
-      const [thesisData, usersData] = await Promise.all([
-        ThesisService.readThesisTopics({
-          skip: (page - 1) * PER_PAGE,
-          limit: PER_PAGE,
-        }),
-        UsersService.readUsers({} as UsersReadUsersData),
-      ])
-
-      const promoters = usersData.data.filter((user: UserPublic) => user.role === "promoter")
-
-      const thesesWithPromoters = thesisData.data.map((thesis) => {
-        const promotor = promoters.find((user) => user.id === thesis.promoter_id)
-
-        return {
-          ...thesis,
-          promoter: promotor ? promotor : null, 
-        }
+      const thesisData = await ThesisService.readThesisTopics({
+        skip: (page - 1) * PER_PAGE,
+        limit: PER_PAGE,
       })
 
       return {
-        data: thesesWithPromoters,
-        total: thesisData.length, 
+        data: thesisData.data,
       }
     },
     queryKey: ["thesis-topics", { page }],
@@ -70,9 +54,21 @@ export const Route = createFileRoute("/_layout/topics")({
   validateSearch: (search) => thesisSearchSchema.parse(search),
 })
 
+function capitalize(text?: string | null) {
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : "N/A"
+}
+
 function ThesisTable() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
+  const queryClient = useQueryClient()
+
+  const { data: promoters } = useQuery({
+    queryKey: ["promoters"],
+    queryFn: () => UsersService.readUsers({} as UsersReadUsersData),
+    select: (data) =>
+      data.data.filter((user: UserPublic) => user.role === "promoter"),
+  })
 
   const { data, isLoading, isPlaceholderData } = useQuery({
     ...getThesisQueryOptions({ page }),
@@ -115,12 +111,14 @@ function ThesisTable() {
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader>Title</Table.ColumnHeader>
-            <Table.ColumnHeader>Description</Table.ColumnHeader>
             <Table.ColumnHeader>Study Stage</Table.ColumnHeader>
             <Table.ColumnHeader>Slots (Total/Avail)</Table.ColumnHeader>
             <Table.ColumnHeader>Status</Table.ColumnHeader>
             <Table.ColumnHeader>Promoter</Table.ColumnHeader>
+            <Table.ColumnHeader>Language</Table.ColumnHeader>
+            <Table.ColumnHeader>Department</Table.ColumnHeader>
             <Table.ColumnHeader>Created At</Table.ColumnHeader>
+            <Table.ColumnHeader>Updated At</Table.ColumnHeader>
             <Table.ColumnHeader>Actions</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
@@ -128,29 +126,36 @@ function ThesisTable() {
           {theses.map((thesis) => (
             <Table.Row key={thesis.id} opacity={isPlaceholderData ? 0.5 : 1}>
               <Table.Cell>{thesis.title}</Table.Cell>
-              <Table.Cell>{thesis.description || "N/A"}</Table.Cell>
-              <Table.Cell>{thesis.target_study_stage}</Table.Cell>
+              <Table.Cell>{capitalize(thesis.target_study_stage)}</Table.Cell>
               <Table.Cell>
                 {thesis.slots_total} / {thesis.slots_available}
               </Table.Cell>
-              <Table.Cell>{thesis.status}</Table.Cell>
+              <Table.Cell>{capitalize(thesis.status)}</Table.Cell>
               <Table.Cell>
-                {thesis.promoter ? thesis.promoter.full_name : "N/A"}
+                {
+                  promoters?.find((user) => user.id === thesis.promoter_id)
+                    ?.full_name ?? "N/A"
+                }
               </Table.Cell>
+              <Table.Cell>{thesis.language || "N/A"}</Table.Cell>
+              <Table.Cell>{thesis.department || "N/A"}</Table.Cell>
               <Table.Cell>
                 {new Date(thesis.created_at).toLocaleDateString()}
               </Table.Cell>
               <Table.Cell>
-                <Flex align="center">
+                {new Date(thesis.updated_at).toLocaleDateString()}
+              </Table.Cell>
+              <Table.Cell>
+                <Flex align="center" gap={2}>
                   <Button
                     colorScheme="teal"
                     size="sm"
                     disabled={thesis.status === "closed" || thesis.slots_available === 0}
                     onClick={() => {
                       if (thesis.status === "closed" || thesis.slots_available === 0) {
-                        alert("This topic is closed or has no available slots.");
+                        alert("This topic is closed or has no available slots.")
                       } else {
-                        alert("You have successfully applied for this thesis topic.");
+                        alert("You have successfully applied for this thesis topic.")
                       }
                     }}
                   >
@@ -167,6 +172,7 @@ function ThesisTable() {
           ))}
         </Table.Body>
       </Table.Root>
+
       <Flex justifyContent="flex-end" mt={4}>
         <PaginationRoot
           count={count}

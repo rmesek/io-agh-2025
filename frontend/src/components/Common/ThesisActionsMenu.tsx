@@ -14,12 +14,12 @@ export const ThesisActionsMenu = ({ thesis }: ThesisActionsMenuProps) => {
   return (
     <MenuRoot>
       <MenuTrigger asChild>
-        <IconButton variant="ghost" color="inherit">
+        <IconButton variant="ghost" color="inherit" aria-label="Actions">
           <BsThreeDotsVertical />
         </IconButton>
       </MenuTrigger>
       <MenuContent>
-        <EditThesis thesis={thesis} />
+        <EditThesis thesisId={thesis.id} />
         <DeleteThesis id={thesis.id} />
       </MenuContent>
     </MenuRoot>
