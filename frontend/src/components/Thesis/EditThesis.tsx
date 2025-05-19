@@ -1,20 +1,18 @@
 import {
   Button,
   ButtonGroup,
+  DialogActionTrigger,
   Input,
   Text,
   VStack,
 } from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { type SubmitHandler, useForm, Controller } from "react-hook-form"
-import { FaExchangeAlt } from "react-icons/fa"
+import { FaEdit } from "react-icons/fa"
+import type { ThesisTopicPublic } from "@/client"
 
-import {
-  type ApiError,
-  type ThesisTopicPublic,
-  ThesisService,
-} from "@/client"
+import { type ApiError, ThesisService } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 import {
@@ -28,24 +26,40 @@ import {
   DialogTrigger,
 } from "../ui/dialog"
 import { Field } from "../ui/field"
-
 import { Radio, RadioGroup } from "../ui/radio"
 
-interface EditThesisProps {
-  thesis: ThesisTopicPublic
-}
-
-interface ThesisUpdateForm {
-  title?: string
+interface ThesisType {
+  id: string
+  title: string
   description?: string | null
-  slots_total?: number
-  slots_available?: number
-  target_study_stage?: "bachelor" | "master" | "any"
-  status?: "open" | "closed"
+  target_study_stage: "bachelor" | "master" | "any"
+  slots_total: number
+  slots_available: number
+  status: "open" | "closed"
+  language?: string | null
+  department?: string | null
+  keywords?: string[]
 }
 
-const EditThesis = ({ thesis }: EditThesisProps) => {
+interface ThesisEditForm {
+  title: string
+  description?: string | null
+  target_study_stage: "bachelor" | "master" | "any"
+  slots_total: number
+  slots_available: number
+  status: "open" | "closed"
+  language?: string | null
+  department?: string | null
+  keywords?: string // comma separated string in form
+}
+
+interface EditThesisProps {
+  thesisId: string
+}
+
+const EditThesis = ({ thesisId }: EditThesisProps) => {
   const [isOpen, setIsOpen] = useState(false)
+  const [thesisData, setThesisData] = useState<ThesisType | null>(null)
   const queryClient = useQueryClient()
   const { showSuccessToast } = useCustomToast()
 
@@ -54,41 +68,80 @@ const EditThesis = ({ thesis }: EditThesisProps) => {
     handleSubmit,
     reset,
     control,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<ThesisUpdateForm>({
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<ThesisEditForm>({
     mode: "onBlur",
-    criteriaMode: "all",
     defaultValues: {
-      title: thesis.title,
-      slots_total: thesis.slots_total,
-      slots_available: thesis.slots_available,
-      description: thesis.description ?? undefined,
-      target_study_stage: thesis.target_study_stage,
-      status: thesis.status,
+      title: "",
+      description: "",
+      target_study_stage: "any",
+      slots_total: 0,
+      slots_available: 0,
+      status: "open",
+      language: "",
+      department: "",
+      keywords: "",
     },
   })
 
+  useEffect(() => {
+    if (isOpen) {
+      ThesisService.readThesisTopic({ id: thesisId })
+        .then((t: ThesisTopicPublic) => {
+          setThesisData(t)
+          reset({
+            title: t.title,
+            description: t.description ?? "",
+            target_study_stage: t.target_study_stage.toLowerCase() as
+              | "bachelor"
+              | "master"
+              | "any",
+            slots_total: t.slots_total,
+            slots_available: t.slots_available,
+            status: t.status,
+            language: t.language ?? "",
+            department: t.department ?? "",
+            keywords: t.keywords ? (Array.isArray(t.keywords) ? t.keywords.join(", ") : "") : "",
+          })
+        })
+        .catch((err: ApiError) => {
+          handleError(err)
+        })
+    }
+  }, [isOpen, thesisId, reset])
+
   const mutation = useMutation({
-    mutationFn: (data: ThesisUpdateForm) =>
-      ThesisService.updateThesisTopic({
-        id: thesis.id,
-        requestBody: data,
-      }),
+    mutationFn: (formData: ThesisEditForm) => {
+      // Zamiana keywords string na tablicę
+      const keywordsArray = formData.keywords
+        ? formData.keywords
+            .split(",")
+            .map(k => k.trim())
+            .filter(k => k.length > 0)
+        : []
+
+      const { keywords, ...rest } = formData
+
+      return ThesisService.updateThesisTopic({
+        id: thesisId,
+        requestBody: {
+          ...rest,
+          keywords: keywordsArray,
+        },
+      })
+    },
     onSuccess: () => {
       showSuccessToast("Thesis updated successfully.")
-      reset()
       setIsOpen(false)
+      queryClient.invalidateQueries({ queryKey: ["thesis-topics"] })
+      queryClient.invalidateQueries({ queryKey: ["thesis-topic", thesisId] })
     },
     onError: (err: ApiError) => {
       handleError(err)
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["thesis-topics"] })
-    },
   })
 
-  const onSubmit: SubmitHandler<ThesisUpdateForm> = (data) => {
+  const onSubmit: SubmitHandler<ThesisEditForm> = (data) => {
     mutation.mutate(data)
   }
 
@@ -101,15 +154,17 @@ const EditThesis = ({ thesis }: EditThesisProps) => {
     >
       <DialogTrigger asChild>
         <Button variant="ghost">
-          <FaExchangeAlt fontSize="16px" />
+          <FaEdit fontSize="16px" />
           Edit Thesis
         </Button>
       </DialogTrigger>
+
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Edit Thesis</DialogTitle>
           </DialogHeader>
+
           <DialogBody>
             <Text mb={4}>Update the thesis details below.</Text>
             <VStack gap={4}>
@@ -121,19 +176,13 @@ const EditThesis = ({ thesis }: EditThesisProps) => {
               >
                 <Input
                   id="title"
-                  {...register("title", {
-                    required: "Title is required",
-                  })}
+                  {...register("title", { required: "Title is required" })}
                   placeholder="Title"
                   type="text"
                 />
               </Field>
 
-              <Field
-                invalid={!!errors.description}
-                errorText={errors.description?.message}
-                label="Description"
-              >
+              <Field invalid={!!errors.description} errorText={errors.description?.message} label="Description">
                 <Input
                   id="description"
                   {...register("description")}
@@ -142,23 +191,12 @@ const EditThesis = ({ thesis }: EditThesisProps) => {
                 />
               </Field>
 
-              <Field
-                invalid={!!errors.target_study_stage}
-                errorText={errors.target_study_stage?.message}
-                label="Target Study Stage"
-              >
+              <Field label="Target Study Stage">
                 <Controller
                   name="target_study_stage"
                   control={control}
                   render={({ field }) => (
-                    <RadioGroup
-                      value={field.value}
-                      onChange={(event) => {
-                        // Rzutowanie event.target na HTMLInputElement
-                        const value = (event.target as HTMLInputElement).value
-                        setValue("target_study_stage", value as "bachelor" | "master" | "any")
-                      }}
-                    >
+                    <RadioGroup value={field.value} onChange={field.onChange}>
                       <Radio value="bachelor">Bachelor</Radio>
                       <Radio value="master">Master</Radio>
                       <Radio value="any">Any</Radio>
@@ -166,10 +204,11 @@ const EditThesis = ({ thesis }: EditThesisProps) => {
                   )}
                 />
               </Field>
+
               <Field label="Slots Total">
                 <Input
                   type="number"
-                  {...register("slots_total", { valueAsNumber: true })}
+                  {...register("slots_total", { valueAsNumber: true, min: 0 })}
                   placeholder="Total Slots"
                 />
               </Field>
@@ -177,31 +216,48 @@ const EditThesis = ({ thesis }: EditThesisProps) => {
               <Field label="Slots Available">
                 <Input
                   type="number"
-                  {...register("slots_available", { valueAsNumber: true })}
+                  {...register("slots_available", { valueAsNumber: true, min: 0 })}
                   placeholder="Available Slots"
                 />
               </Field>
-              <Field
-                invalid={!!errors.status}
-                errorText={errors.status?.message}
-                label="Status"
-              >
+
+              <Field label="Status">
                 <Controller
                   name="status"
                   control={control}
                   render={({ field }) => (
-                    <RadioGroup
-                      value={field.value}
-                      onChange={(event) => {
-                        // Rzutowanie event.target na HTMLInputElement
-                        const value = (event.target as HTMLInputElement).value
-                        setValue("status", value as "open" | "closed")
-                      }}
-                    >
+                    <RadioGroup value={field.value} onChange={field.onChange}>
                       <Radio value="open">Open</Radio>
                       <Radio value="closed">Closed</Radio>
                     </RadioGroup>
                   )}
+                />
+              </Field>
+
+              <Field label="Language">
+                <Input
+                  id="language"
+                  {...register("language")}
+                  placeholder="e.g., English"
+                  type="text"
+                />
+              </Field>
+
+              <Field label="Department">
+                <Input
+                  id="department"
+                  {...register("department")}
+                  placeholder="e.g., Computer Science"
+                  type="text"
+                />
+              </Field>
+
+              <Field label="Keywords (comma separated)">
+                <Input
+                  id="keywords"
+                  {...register("keywords")}
+                  placeholder="e.g., AI, Machine Learning, NLP"
+                  type="text"
                 />
               </Field>
             </VStack>
@@ -209,18 +265,14 @@ const EditThesis = ({ thesis }: EditThesisProps) => {
 
           <DialogFooter gap={2}>
             <ButtonGroup>
-              <DialogTrigger asChild>
-                <Button
-                  variant="subtle"
-                  colorPalette="gray"
-                  disabled={isSubmitting}
-                >
+              <DialogActionTrigger asChild>
+                <Button variant="subtle" colorScheme="gray" disabled={isSubmitting}>
                   Cancel
                 </Button>
-              </DialogTrigger>
-              {/* <Button variant="solid" type="submit" isLoading={isSubmitting}>
+              </DialogActionTrigger>
+              <Button variant="solid" type="submit" loading={isSubmitting} disabled={!isValid}>
                 Save
-              </Button> */}
+              </Button>
             </ButtonGroup>
           </DialogFooter>
         </form>

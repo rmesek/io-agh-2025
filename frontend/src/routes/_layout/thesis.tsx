@@ -5,7 +5,6 @@ import {
   Heading,
   Table,
   VStack,
-  Text,
 } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -51,6 +50,10 @@ export const Route = createFileRoute("/_layout/thesis")({
   validateSearch: (search) => thesisSearchSchema.parse(search),
 })
 
+function capitalize(text?: string | null) {
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : "N/A"
+}
+
 function ThesisTable() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
@@ -72,12 +75,11 @@ function ThesisTable() {
       search: (prev: { [key: string]: string }) => ({ ...prev, page }),
     })
 
-  const theses = (data?.data || []) as ThesisTopicPublic[] // All theses
+  const theses = (data?.data || []) as ThesisTopicPublic[]
   const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"]) // Get the current user
-  const currentUserId = currentUser?.id // Get the current user's ID
+  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+  const currentUserId = currentUser?.id
 
-  // Filter theses to only show the ones where the current user is the promoter
   const filteredTheses = theses.filter(
     (thesis) => thesis.promoter_id === currentUserId
   )
@@ -112,12 +114,14 @@ function ThesisTable() {
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader>Title</Table.ColumnHeader>
-            <Table.ColumnHeader>Description</Table.ColumnHeader>
             <Table.ColumnHeader>Study Stage</Table.ColumnHeader>
             <Table.ColumnHeader>Slots (Total/Avail)</Table.ColumnHeader>
             <Table.ColumnHeader>Status</Table.ColumnHeader>
             <Table.ColumnHeader>Promoter</Table.ColumnHeader>
+            <Table.ColumnHeader>Language</Table.ColumnHeader>
+            <Table.ColumnHeader>Department</Table.ColumnHeader>
             <Table.ColumnHeader>Created At</Table.ColumnHeader>
+            <Table.ColumnHeader>Updated At</Table.ColumnHeader>
             <Table.ColumnHeader>Actions</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
@@ -125,18 +129,24 @@ function ThesisTable() {
           {filteredTheses.map((thesis) => (
             <Table.Row key={thesis.id} opacity={isPlaceholderData ? 0.5 : 1}>
               <Table.Cell>{thesis.title}</Table.Cell>
-              <Table.Cell>{thesis.description || "N/A"}</Table.Cell>
-              <Table.Cell>{thesis.target_study_stage}</Table.Cell>
+              <Table.Cell>{capitalize(thesis.target_study_stage)}</Table.Cell>
               <Table.Cell>
                 {thesis.slots_total} / {thesis.slots_available}
               </Table.Cell>
-              <Table.Cell>{thesis.status}</Table.Cell>
+              <Table.Cell>{capitalize(thesis.status)}</Table.Cell>
               <Table.Cell>
-                {promoters?.find((p) => p.id === thesis.promoter_id)?.full_name ||
-                  "N/A"}
+                {
+                  promoters?.find((user) => user.id === thesis.promoter_id)
+                    ?.full_name ?? "N/A"
+                }
               </Table.Cell>
+              <Table.Cell>{thesis.language || "N/A"}</Table.Cell>
+              <Table.Cell>{thesis.department || "N/A"}</Table.Cell>
               <Table.Cell>
                 {new Date(thesis.created_at).toLocaleDateString()}
+              </Table.Cell>
+              <Table.Cell>
+                {new Date(thesis.updated_at).toLocaleDateString()}
               </Table.Cell>
               <Table.Cell>
                 <ThesisActionsMenu thesis={thesis} />
@@ -145,6 +155,7 @@ function ThesisTable() {
           ))}
         </Table.Body>
       </Table.Root>
+
       <Flex justifyContent="flex-end" mt={4}>
         <PaginationRoot
           count={count}

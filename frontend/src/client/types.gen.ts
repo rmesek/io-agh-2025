@@ -252,6 +252,9 @@ export type ThesisTopicUpdate = {
   slots_total?: number
   slots_available?: number
   status?: "open" | "closed"
+  language?: string | null       // <--- nowo dodane
+  department?: string | null     // <--- nowo dodane
+  keywords?: string[]            // <--- wcześniej dodane
 }
 
 export type ThesisTopicPublic = {
@@ -264,7 +267,10 @@ export type ThesisTopicPublic = {
   target_study_stage: "bachelor" | "master" | "any"
   slots_total: number
   slots_available: number
+  language: string
+  department: string
   status: "open" | "closed"
+  keywords?: string[]  // <--- dodane pole jako opcjonalna lista stringów
   promoter?: {
     user: {
       full_name: string

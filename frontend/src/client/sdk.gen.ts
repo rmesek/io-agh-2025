@@ -630,44 +630,57 @@ public static createThesisTopic(
    * @returns ThesisTopicPublic Successful Response
    * @throws ApiError
    */
-  public static updateThesisTopic(
-    data: ThesesUpdateThesisData,
-  ): CancelablePromise<ThesesUpdateThesisResponse> {
-    return __request(OpenAPI, {
-      method: "PUT",
-      url: "/api/v1/thesis-topics/{id}",
-      path: {
-        id: data.id,
-      },
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
+public static updateThesisTopic(
+  data: ThesesUpdateThesisData,
+): CancelablePromise<ThesesUpdateThesisResponse> {
+  return __request(OpenAPI, {
+    method: "PATCH",  // zmienione z PUT na PATCH
+    url: "/api/v1/thesis-topics/{id}",
+    path: {
+      id: data.id,
+    },
+    body: data.requestBody,
+    mediaType: "application/json",
+    errors: {
+      422: "Validation Error",
+    },
+  })
+}
 
-  /**
-   * Delete Thesis Topic
-   * Delete a thesis topic.
-   * @param data The data for the request.
-   * @param data.id
-   * @returns Message Successful Response
-   * @throws ApiError
-   */
-  public static deleteThesisTopic(
-    data: ThesesDeleteThesisData,
-  ): CancelablePromise<ThesesDeleteThesisResponse> {
-    return __request(OpenAPI, {
-      method: "DELETE",
-      url: "/api/v1/thesis-topics/{id}",
-      path: {
-        id: data.id,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
+/**
+ * Delete Thesis Topic
+ * Delete a thesis topic.
+ * @param data The data for the request.
+ * @param data.id
+ * @returns Message Successful Response
+ * @throws ApiError
+ */
+public static deleteThesisTopic(
+  data: ThesesDeleteThesisData,
+): CancelablePromise<ThesesDeleteThesisResponse> {
+  return __request(OpenAPI, {
+    method: "DELETE",
+    url: "/api/v1/thesis-topics/{id}",
+    path: {
+      id: data.id,
+    },
+    errors: {
+      422: "Validation Error",
+    },
+  })
+}
+public static createThesisTopicMe(
+  data: ThesesCreateThesisData,
+): CancelablePromise<ThesesCreateThesisResponse> {
+  return __request(OpenAPI, {
+    method: "POST",
+    url: "/api/v1/thesis-topics/me",
+    body: data.requestBody,
+    mediaType: "application/json",
+    errors: {
+      400: "Bad Request", // np. duplikat tytułu lub brak uprawnień promotora
+      422: "Validation Error",
+    },
+  })
+}
 }
