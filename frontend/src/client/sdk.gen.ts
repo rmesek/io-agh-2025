@@ -56,6 +56,8 @@ import type {
   ThesesUpdateThesisResponse,
   ThesesDeleteThesisData,
   ThesesDeleteThesisResponse,
+  ThesisApplicationPublic,
+  ThesisApplicationsPublic,
   
 } from "./types.gen"
 
@@ -678,9 +680,150 @@ public static createThesisTopicMe(
     body: data.requestBody,
     mediaType: "application/json",
     errors: {
-      400: "Bad Request", // np. duplikat tytułu lub brak uprawnień promotora
+      400: "Bad Request",
       422: "Validation Error",
     },
   })
 }
+}
+
+export class ThesisApplicationService {
+  /**
+   * Read Thesis Applications (Student)
+   * @returns ThesisApplicationsPublic Successful Response
+   * @throws ApiError
+   */
+  public static readThesisApplicationsStudent(
+    data: { skip?: number; limit?: number } = {}
+  ): CancelablePromise<ThesisApplicationsPublic> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/thesis-applications/student",
+      query: {
+        skip: data.skip,
+        limit: data.limit,
+      },
+      errors: {
+        401: "Unauthorized",
+        403: "Forbidden",
+      },
+    })
+  }
+
+  /**
+   * Read Thesis Applications (Promoter)
+   * @param data
+   * @param data.skip
+   * @param data.limit
+   * @returns ThesisApplicationsPublic Successful Response
+   * @throws ApiError
+   */
+  public static readThesisApplicationsPromoter(
+    data: { skip?: number; limit?: number } = {}
+  ): CancelablePromise<ThesisApplicationsPublic> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/thesis-applications/promoter",
+      query: {
+        skip: data.skip,
+        limit: data.limit,
+      },
+      errors: {
+        401: "Unauthorized",
+        403: "Forbidden",
+      },
+    })
+  }
+
+  /**
+   * Update Thesis Application (Promoter)
+   * @param data.id ID of the thesis application
+   * @param data.requestBody Request body containing the status
+   * @returns ThesisApplicationPublic Successful Response
+   * @throws ApiError
+   */
+  public static updateThesisApplicationPromoter(
+    data: {
+      id: string
+      requestBody: { status: ThesisApplicationPublic["status"], student_message: string }
+      query?: { application_id: string }
+    },
+  ): CancelablePromise<ThesisApplicationPublic> {
+    return __request(OpenAPI, {
+      method: "PATCH",
+      url: "/api/v1/thesis-applications/{id}/promoter",
+      path: {
+        id: data.id,
+      },
+      query: data.query,
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        400: "Bad Request",
+        401: "Unauthorized",
+        404: "Not Found",
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Update Thesis Application (Student)
+   * @param data.id ID of the thesis application
+   * @param data.requestBody Request body containing the status
+   * @returns ThesisApplicationPublic Successful Response
+   * @throws ApiError
+   */
+  public static updateThesisApplicationStudent(
+    data: {
+      id: string
+      requestBody: { status: ThesisApplicationPublic["status"]}
+      query?: { application_id: string }
+    },
+  ): CancelablePromise<ThesisApplicationPublic> {
+    return __request(OpenAPI, {
+      method: "PATCH",
+      url: "/api/v1/thesis-applications/{id}/student",
+      path: {
+        id: data.id,
+      },
+      query: data.query,
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        400: "Bad Request",
+        401: "Unauthorized",
+        404: "Not Found",
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Create Thesis Application (Student)
+   * @param data.requestBody Request body containing required fields
+   * @returns ThesisApplicationPublic Successful Response
+   * @throws ApiError
+   */
+  public static createThesisApplicationStudent(
+    data: {
+      requestBody: {
+        thesis_topic_id: string
+        student_message?: string
+      }
+    }
+  ): CancelablePromise<ThesisApplicationPublic> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/thesis-applications/student",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        400: "Bad Request",
+        401: "Unauthorized",
+        403: "Forbidden",
+        422: "Validation Error",
+      },
+    })
+  }
 }

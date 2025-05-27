@@ -82,7 +82,7 @@ function Login() {
             <Input
               id="username"
               {...register("username", {
-                required: "Username is required",
+                required: "Nazwa użytkownika jest wymagana",
                 pattern: emailPattern,
               })}
               placeholder="Email"
@@ -94,19 +94,19 @@ function Login() {
           type="password"
           startElement={<FiLock />}
           {...register("password", passwordRules())}
-          placeholder="Password"
+          placeholder="Hasło"
           errors={errors}
         />
         <RouterLink to="/recover-password" className="main-link">
-          Forgot Password?
+          Nie pamiętasz hasła?
         </RouterLink>
         <Button variant="solid" type="submit" loading={isSubmitting} size="md">
-          Log In
+          Zaloguj się
         </Button>
         <Text>
-          Don't have an account?{" "}
+          Nie masz konta?{" "}
           <RouterLink to="/signup" className="main-link">
-            Sign Up
+            Zarejestruj się
           </RouterLink>
         </Text>
       </Container>

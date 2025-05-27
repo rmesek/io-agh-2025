@@ -6,14 +6,15 @@ import {
   Table,
   VStack,
   Button,
-  Text,
+  Text
 } from "@chakra-ui/react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
 import {
   ThesisService,
+  ThesisApplicationService,
   type ThesisTopicPublic,
   UsersService,
   type UserPublic,
@@ -26,6 +27,7 @@ import {
   PaginationPrevTrigger,
   PaginationRoot,
 } from "@/components/ui/pagination.tsx"
+import useCustomToast from "@/hooks/useCustomToast"
 
 const thesisSearchSchema = z.object({
   page: z.number().catch(1),
@@ -75,10 +77,34 @@ function ThesisTable() {
     placeholderData: (prevData) => prevData,
   })
 
+  const { data: applications } = useQuery({
+    queryKey: ["thesis-applications"],
+    queryFn: () => ThesisApplicationService.readThesisApplicationsStudent(),
+    enabled: true,
+  })
+
   const setPage = (page: number) =>
     navigate({
       search: (prev: { [key: string]: string }) => ({ ...prev, page }),
     })
+  
+  const { showSuccessToast } = useCustomToast()
+  const applyMutation = useMutation({
+    mutationFn: (thesisId: string) =>
+      ThesisApplicationService.createThesisApplicationStudent({
+        requestBody: {
+          thesis_topic_id: thesisId,
+        },
+      }),
+    onSuccess: () => {
+      showSuccessToast("Successfully applied to the thesis topic.")
+      queryClient.invalidateQueries({ queryKey: ["thesis-applications"] })
+    },
+    onError: (error) => {
+      useCustomToast().showErrorToast((error as any)?.body?.message || "Something went wrong.")
+    },
+  })
+
 
   const theses = (data?.data || []) as ThesisTopicPublic[]
   const count = theses.length
@@ -95,9 +121,9 @@ function ThesisTable() {
             <FiSearch />
           </EmptyState.Indicator>
           <VStack textAlign="center">
-            <EmptyState.Title>No thesis topics found</EmptyState.Title>
+            <EmptyState.Title>Brak dostępnych tematów prac dyplomowych</EmptyState.Title>
             <EmptyState.Description>
-              Add a new thesis topic to get started
+              Dodaj nowy temat pracy dyplomowej, aby zacząć
             </EmptyState.Description>
           </VStack>
         </EmptyState.Content>
@@ -110,20 +136,24 @@ function ThesisTable() {
       <Table.Root size={{ base: "sm", md: "md" }}>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader>Title</Table.ColumnHeader>
-            <Table.ColumnHeader>Study Stage</Table.ColumnHeader>
-            <Table.ColumnHeader>Slots (Total/Avail)</Table.ColumnHeader>
+            <Table.ColumnHeader>Tytuł</Table.ColumnHeader>
+            <Table.ColumnHeader>Etap studiów</Table.ColumnHeader>
+            <Table.ColumnHeader>Miejsca (Wszystkie/Dostępne)</Table.ColumnHeader>
             <Table.ColumnHeader>Status</Table.ColumnHeader>
-            <Table.ColumnHeader>Promoter</Table.ColumnHeader>
-            <Table.ColumnHeader>Language</Table.ColumnHeader>
-            <Table.ColumnHeader>Department</Table.ColumnHeader>
-            <Table.ColumnHeader>Created At</Table.ColumnHeader>
-            <Table.ColumnHeader>Updated At</Table.ColumnHeader>
-            <Table.ColumnHeader>Actions</Table.ColumnHeader>
+            <Table.ColumnHeader>Promotor</Table.ColumnHeader>
+            <Table.ColumnHeader>Język</Table.ColumnHeader>
+            <Table.ColumnHeader>Wydział</Table.ColumnHeader>
+            <Table.ColumnHeader>Utworzono</Table.ColumnHeader>
+            <Table.ColumnHeader>Zaktualizowano</Table.ColumnHeader>
+            <Table.ColumnHeader>Akcje</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {theses.map((thesis) => (
+          {theses.map((thesis) => {
+            const hasApplied = applications?.data.some(
+              (app) => app.thesis_topic.id === thesis.id
+            )
+            return (
             <Table.Row key={thesis.id} opacity={isPlaceholderData ? 0.5 : 1}>
               <Table.Cell>{thesis.title}</Table.Cell>
               <Table.Cell>{capitalize(thesis.target_study_stage)}</Table.Cell>
@@ -146,30 +176,37 @@ function ThesisTable() {
                 {new Date(thesis.updated_at).toLocaleDateString()}
               </Table.Cell>
               <Table.Cell>
-                <Flex align="center" gap={2}>
+                <Flex direction="column" align="start" gap={1}>
                   <Button
                     colorScheme="teal"
                     size="sm"
-                    disabled={thesis.status === "closed" || thesis.slots_available === 0}
+                    disabled={
+                      thesis.status === "closed" ||
+                      thesis.slots_available === 0 ||
+                      hasApplied
+                    }
                     onClick={() => {
-                      if (thesis.status === "closed" || thesis.slots_available === 0) {
-                        alert("This topic is closed or has no available slots.")
-                      } else {
-                        alert("You have successfully applied for this thesis topic.")
-                      }
+                      applyMutation.mutate(thesis.id);
                     }}
                   >
-                    Apply
+                    Aplikuj
                   </Button>
-                  {(thesis.status === "closed" || thesis.slots_available === 0) && (
-                    <Text color="red" ml={2}>
-                      This topic is closed or has no available slots.
+                  {(thesis.status === "closed" ||
+                    thesis.slots_available === 0 ||
+                    hasApplied) && (
+                    <Text fontSize="sm" color="red.500" mt={1}>
+                      {thesis.status === "closed"
+                        ? "Ten temat jest zamknięty."
+                        : thesis.slots_available === 0
+                        ? "Brak dostępnych miejsc."
+                        : "Już zgłosiłeś się na ten temat."}
                     </Text>
                   )}
                 </Flex>
               </Table.Cell>
             </Table.Row>
-          ))}
+            )
+          })}
         </Table.Body>
       </Table.Root>
 
@@ -194,7 +231,7 @@ function Thesis() {
   return (
     <Container maxW="full" py={8}>
       <Flex justify="space-between" align="center" mb={8}>
-        <Heading size="lg">Thesis Topics</Heading>
+        <Heading size="lg">Tematy prac dyplomowych</Heading>
       </Flex>
       <ThesisTable />
     </Container>

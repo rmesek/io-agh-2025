@@ -1,7 +1,22 @@
-import { Box, Container, Text } from "@chakra-ui/react"
+import {
+  Container,
+  Heading,
+  Text,
+  Button,
+  Table,
+  Flex,
+} from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
-
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { ThesisApplicationService, ApplicationStatusEnum } from "@/client"
 import useAuth from "@/hooks/useAuth"
+import {
+  PaginationItems,
+  PaginationNextTrigger,
+  PaginationPrevTrigger,
+  PaginationRoot,
+} from "@/components/ui/pagination.tsx"
+import { useState } from "react"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -9,17 +24,291 @@ export const Route = createFileRoute("/_layout/")({
 
 function Dashboard() {
   const { user: currentUser } = useAuth()
+  const isStudent = currentUser?.role === "student"
+  const isPromoter = currentUser?.role === "promoter"
+  const queryClient = useQueryClient()
+
+  const PER_PAGE = 5
+
+  const [page, setPage] = useState(1)
+  const [pendingPage, setPendingPage] = useState(1)
+  const [handledPage, setHandledPage] = useState(1)
+  const skip = (page - 1) * PER_PAGE
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["thesis-applications", currentUser?.id, page],
+    queryFn: () => {
+      const queryParams = isStudent ? { limit: PER_PAGE, skip } : undefined
+
+      if (isStudent) {
+        return ThesisApplicationService.readThesisApplicationsStudent({ query: queryParams })
+      }
+
+      if (isPromoter) {
+        return ThesisApplicationService.readThesisApplicationsPromoter({})
+      }
+
+      return Promise.resolve({ data: [] })
+    },
+    onError: (err) => {
+      console.error("Error fetching thesis applications:", err)
+    },
+  })
+
+  const mutationCancel = useMutation({
+    mutationFn: ({ id }: { id: string }) =>
+      ThesisApplicationService.updateThesisApplicationStudent({
+        id,
+        query: { application_id: id },
+        requestBody: {
+          status: ApplicationStatusEnum.CANCELED_BY_STUDENT,
+        },
+      }),
+    onSuccess: () => queryClient.invalidateQueries(["thesis-applications"]),
+  })
+
+  const mutationApprove = useMutation({
+    mutationFn: ({ id }: { id: string }) =>
+      ThesisApplicationService.updateThesisApplicationPromoter({
+        id,
+        query: { application_id: id },
+        requestBody: {
+          status: ApplicationStatusEnum.APPROVED_BY_PROMOTER,
+        },
+      }),
+    onSuccess: () => queryClient.invalidateQueries(["thesis-applications"]),
+  })
+
+  const mutationReject = useMutation({
+    mutationFn: ({ id }: { id: string }) =>
+      ThesisApplicationService.updateThesisApplicationPromoter({
+        id,
+        query: { application_id: id },
+        requestBody: {
+          status: ApplicationStatusEnum.REJECTED_BY_PROMOTER,
+        },
+      }),
+    onSuccess: () => queryClient.invalidateQueries(["thesis-applications"]),
+  })
+
+  if (isLoading) return <Text>Loading...</Text>
+
+  const statusLabels: Record<string, string> = {
+    pending_approval: "Oczekujące",
+    approved_by_promoter: "Zaakceptowane",
+    rejected_by_promoter: "Odrzucone",
+    canceled_by_student: "Anulowane przez studenta",
+  }
+
+  const applications = data?.data ?? []
+  const count = applications.length 
+
+  const pendingApplications = applications.filter(
+    (app) => app.status === ApplicationStatusEnum.PENDING_APPROVAL
+  )
+  const handledApplications = applications.filter(
+    (app) =>
+      app.status === ApplicationStatusEnum.APPROVED_BY_PROMOTER ||
+      app.status === ApplicationStatusEnum.REJECTED_BY_PROMOTER
+  )
+
+  const pendingCount = pendingApplications.length
+  const handledCount = handledApplications.length
+
+  const paginatedPending = pendingApplications.slice(
+    (pendingPage - 1) * PER_PAGE,
+    pendingPage * PER_PAGE
+  )
+  const paginatedHandled = handledApplications.slice(
+    (handledPage - 1) * PER_PAGE,
+    handledPage * PER_PAGE
+  )
 
   return (
-    <>
-      <Container maxW="full">
-        <Box pt={12} m={4}>
-          <Text fontSize="2xl" truncate maxW="sm">
-            Hi, {currentUser?.full_name || currentUser?.email} 👋🏼
-          </Text>
-          <Text>Welcome back, nice to see you again!</Text>
-        </Box>
-      </Container>
-    </>
+    <Container maxW="full" py={8}>
+      <Heading mb={6}>Twoje zgłoszenia</Heading>
+
+      {isStudent && (
+        <>
+          {!applications.length ? (
+            <Text>Brak zgłoszeń</Text>
+          ) : (
+            <>
+              <Table.Root size={{ base: "sm", md: "md" }}>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader>Praca</Table.ColumnHeader>
+                    <Table.ColumnHeader>Promotor</Table.ColumnHeader>
+                    <Table.ColumnHeader>Data</Table.ColumnHeader>
+                    <Table.ColumnHeader>Status</Table.ColumnHeader>
+                    <Table.ColumnHeader></Table.ColumnHeader>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {applications.map((application) => (
+                    <Table.Row
+                      key={application.id}
+                      sx={{ borderBottom: "1px solid", borderColor: "gray.200" }}
+                    >
+                      <Table.Cell>{application.thesis_topic?.title ?? "N/A"}</Table.Cell>
+                      <Table.Cell>{application.thesis_topic?.promoter?.full_name ?? "-"}</Table.Cell>
+                      <Table.Cell>{new Date(application.created_at).toLocaleDateString()}</Table.Cell>
+                      <Table.Cell>{statusLabels[application.status] ?? "N/A"}</Table.Cell>
+                      <Table.Cell>
+                        {application.status !== ApplicationStatusEnum.CANCELED_BY_STUDENT && (
+                          <Button
+                            size="sm"
+                            colorScheme="red"
+                            onClick={() => mutationCancel.mutate({ id: application.id })}
+                          >
+                            Anuluj
+                          </Button>
+                        )}
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+
+              <Flex justifyContent="flex-end" mt={4}>
+                <PaginationRoot
+                  count={count}
+                  pageSize={PER_PAGE}
+                  page={page}
+                  onPageChange={({ page }) => setPage(page)}
+                >
+                  <Flex gap={2}>
+                    <PaginationPrevTrigger />
+                    <PaginationItems />
+                    <PaginationNextTrigger />
+                  </Flex>
+                </PaginationRoot>
+              </Flex>
+            </>
+          )}
+        </>
+      )}
+
+      {isPromoter && (
+        <Flex gap={8} direction="column">
+          <Container flex={1} minW="360px">
+            <Heading size="md" mb={4}>
+              Oczekujące zgłoszenia
+            </Heading>
+
+            {paginatedPending.length === 0 ? (
+              <Text>Brak oczekujących zgłoszeń</Text>
+            ) : (
+              <>
+                <Table.Root size={{ base: "sm", md: "md" }}>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeader>Praca</Table.ColumnHeader>
+                      <Table.ColumnHeader>Student</Table.ColumnHeader>
+                      <Table.ColumnHeader>Data</Table.ColumnHeader>
+                      <Table.ColumnHeader></Table.ColumnHeader>
+                      <Table.ColumnHeader></Table.ColumnHeader>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {paginatedPending.map((application) => (
+                      <Table.Row
+                        key={application.id}
+                        sx={{ borderBottom: "1px solid", borderColor: "gray.200" }}
+                      >
+                        <Table.Cell>{application.thesis_topic?.title ?? "N/A"}</Table.Cell>
+                        <Table.Cell>{application.student?.full_name ?? "-"}</Table.Cell>
+                        <Table.Cell>{new Date(application.created_at).toLocaleDateString()}</Table.Cell>
+                        <Table.Cell>
+                          <Button
+                            size="sm"
+                            onClick={() => mutationApprove.mutate({ id: application.id })}
+                          >
+                            Zaakceptuj
+                          </Button>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Button
+                            size="sm"
+                            onClick={() => mutationReject.mutate({ id: application.id })}
+                          >
+                            Odrzuć
+                          </Button>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table.Root>
+
+                <Flex justifyContent="flex-end" mt={4}>
+                  <PaginationRoot
+                    count={pendingCount}
+                    pageSize={PER_PAGE}
+                    page={pendingPage}
+                    onPageChange={({ page }) => setPendingPage(page)}
+                  >
+                    <Flex gap={2}>
+                      <PaginationPrevTrigger />
+                      <PaginationItems />
+                      <PaginationNextTrigger />
+                    </Flex>
+                  </PaginationRoot>
+                </Flex>
+              </>
+            )}
+          </Container>
+
+          <Container flex={1} minW="360px">
+            <Heading size="md" mb={4}>
+              Pozostałe zgłoszenia
+            </Heading>
+
+            {paginatedHandled.length === 0 ? (
+              <Text>Brak zatwierdzonych lub odrzuconych zgłoszeń</Text>
+            ) : (
+              <>
+                <Table.Root size={{ base: "sm", md: "md" }}>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeader>Praca</Table.ColumnHeader>
+                      <Table.ColumnHeader>Student</Table.ColumnHeader>
+                      <Table.ColumnHeader>Status</Table.ColumnHeader>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {paginatedHandled.map((application) => (
+                      <Table.Row
+                        key={application.id}
+                        sx={{ borderBottom: "1px solid", borderColor: "gray.200" }}
+                      >
+                        <Table.Cell>{application.thesis_topic?.title ?? "N/A"}</Table.Cell>
+                        <Table.Cell>{application.student?.full_name ?? "-"}</Table.Cell>
+                        <Table.Cell>{statusLabels[application.status] ?? "N/A"}</Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table.Root>
+
+                <Flex justifyContent="flex-end" mt={4}>
+                  <PaginationRoot
+                    count={handledCount}
+                    pageSize={PER_PAGE}
+                    page={handledPage}
+                    onPageChange={({ page }) => setHandledPage(page)}
+                  >
+                    <Flex gap={2}>
+                      <PaginationPrevTrigger />
+                      <PaginationItems />
+                      <PaginationNextTrigger />
+                    </Flex>
+                  </PaginationRoot>
+                </Flex>
+              </>
+            )}
+          </Container>
+        </Flex>
+      )}
+
+    </Container>
   )
 }

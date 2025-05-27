@@ -1,15 +1,15 @@
 import { Box, Flex, Icon, Text } from "@chakra-ui/react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Link as RouterLink } from "@tanstack/react-router"
-import { FiBriefcase, FiHome, FiSettings, FiUsers, FiBook } from "react-icons/fi"
+import { FiHome, FiSettings, FiUsers, FiBook } from "react-icons/fi"
 import type { IconType } from "react-icons/lib"
 
 import type { UserPublic } from "@/client"
 
 const items = [
-  { icon: FiHome, title: "Dashboard", path: "/" },
+  { icon: FiHome, title: "Strona główna", path: "/" },
   // { icon: FiBriefcase, title: "Items", path: "/items" },
-  { icon: FiSettings, title: "User Settings", path: "/settings" },
+  { icon: FiSettings, title: "Ustawienia", path: "/settings" },
 ]
 
 interface SidebarItemsProps {
@@ -33,8 +33,8 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const finalItems: Item[] = [
     ...items,
     ...(isSuperUser ? [{ icon: FiUsers, title: "Admin", path: "/admin" }] : []),
-    ...(isPromotor ? [{ icon: FiBook, title: "Thesis", path: "/thesis" }] : []),
-    ...(isStudent ? [{ icon: FiBook, title: "Topics", path: "/topics" }] : []),
+    ...(isPromotor ? [{ icon: FiBook, title: "Prace dyplomowe", path: "/thesis" }] : []),
+    ...(isStudent ? [{ icon: FiBook, title: "Tematy prac dyplomowych", path: "/topics" }] : []),
   ]
 
   const listItems = finalItems.map(({ icon, title, path }) => (

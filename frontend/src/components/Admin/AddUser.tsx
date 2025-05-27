@@ -92,11 +92,11 @@ const AddUser = () => {
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Add User</DialogTitle>
+            <DialogTitle>Dodaj użytkownika</DialogTitle>
           </DialogHeader>
           <DialogBody>
             <Text mb={4}>
-              Fill in the form below to add a new user to the system.
+              Wypełnij poniższy formularz, aby dodać nowego użytkownika do systemu.
             </Text>
             <VStack gap={4}>
               <Field
@@ -108,7 +108,7 @@ const AddUser = () => {
                 <Input
                   id="email"
                   {...register("email", {
-                    required: "Email is required",
+                    required: "Email jest wymagany",
                     pattern: emailPattern,
                   })}
                   placeholder="Email"
@@ -119,7 +119,7 @@ const AddUser = () => {
               <Field
                 invalid={!!errors.full_name}
                 errorText={errors.full_name?.message}
-                label="Full Name"
+                label="Imię i nazwisko"
               >
                 <Input
                   id="name"
@@ -133,15 +133,15 @@ const AddUser = () => {
                 required
                 invalid={!!errors.password}
                 errorText={errors.password?.message}
-                label="Set Password"
+                label="Ustaw hasło"
               >
                 <Input
                   id="password"
                   {...register("password", {
-                    required: "Password is required",
+                    required: "Hasło jest wymagane",
                     minLength: {
                       value: 8,
-                      message: "Password must be at least 8 characters",
+                      message: "Hasło musi mieć co najmniej 8 znaków",
                     },
                   })}
                   placeholder="Password"
@@ -153,15 +153,15 @@ const AddUser = () => {
                 required
                 invalid={!!errors.confirm_password}
                 errorText={errors.confirm_password?.message}
-                label="Confirm Password"
+                label="Potwierdź hasło"
               >
                 <Input
                   id="confirm_password"
                   {...register("confirm_password", {
-                    required: "Please confirm your password",
+                    required: "Proszę potwierdź hasło",
                     validate: (value) =>
                       value === getValues().password ||
-                      "The passwords do not match",
+                      "Hasła nie są takie same",
                   })}
                   placeholder="Password"
                   type="password"
@@ -208,7 +208,7 @@ const AddUser = () => {
                 colorPalette="gray"
                 disabled={isSubmitting}
               >
-                Cancel
+                Anuluj
               </Button>
             </DialogActionTrigger>
             <Button
@@ -217,7 +217,7 @@ const AddUser = () => {
               disabled={!isValid}
               loading={isSubmitting}
             >
-              Save
+              Zapisz
             </Button>
           </DialogFooter>
         </form>
