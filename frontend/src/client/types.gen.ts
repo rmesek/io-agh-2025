@@ -317,3 +317,25 @@ export type ThesesDeleteThesisData = {
 }
 
 export type ThesesDeleteThesisResponse = Message
+
+
+export enum ApplicationStatusEnum {
+  PENDING_APPROVAL = "pending_approval",
+  APPROVED_BY_PROMOTER = "approved_by_promoter",
+  REJECTED_BY_PROMOTER = "rejected_by_promoter",
+  CANCELED_BY_STUDENT = "canceled_by_student",
+}
+
+export type ThesisApplicationPublic = {
+  id: string
+  status: ApplicationStatusEnum
+  student_message: string
+  student?: { id: string; full_name: string }
+  thesis_topic: { id: string; title: string }
+  created_at: string
+}
+
+export type ThesisApplicationsPublic = {
+  data: ThesisApplicationPublic[]
+  count: number
+}

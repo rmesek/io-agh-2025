@@ -6,7 +6,7 @@ import { FiTrash2 } from "react-icons/fi"
 
 import { ThesisService } from "@/client"
 import {
-  DialogActionTrigger,
+  //DialogActionTrigger,
   DialogBody,
   DialogCloseTrigger,
   DialogContent,
