@@ -35,7 +35,7 @@ const UserMenu = () => {
                 style={{ cursor: "pointer" }}
               >
                 <FiUser fontSize="18px" />
-                <Box flex="1">My Profile</Box>
+                <Box flex="1">Mój profil</Box>
               </MenuItem>
             </Link>
 
@@ -47,7 +47,7 @@ const UserMenu = () => {
               style={{ cursor: "pointer" }}
             >
               <FiLogOut />
-              Log Out
+              Wyloguj
             </MenuItem>
           </MenuContent>
         </MenuRoot>
