@@ -38,10 +38,8 @@ function Dashboard() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["thesis-applications", currentUser?.id, page],
     queryFn: () => {
-      const queryParams = isStudent ? { limit: PER_PAGE, skip } : undefined
-
       if (isStudent) {
-        return ThesisApplicationService.readThesisApplicationsStudent({ query: queryParams })
+        return ThesisApplicationService.readThesisApplicationsStudent({ limit: PER_PAGE, skip })
       }
 
       if (isPromoter) {
@@ -50,10 +48,11 @@ function Dashboard() {
 
       return Promise.resolve({ data: [] })
     },
-    onError: (err) => {
-      console.error("Error fetching thesis applications:", err)
-    },
   })
+
+  if (error) {
+    console.error("Error fetching thesis applications:", error)
+  }
 
   const mutationCancel = useMutation({
     mutationFn: ({ id }: { id: string }) =>
@@ -64,7 +63,7 @@ function Dashboard() {
           status: ApplicationStatusEnum.CANCELED_BY_STUDENT,
         },
       }),
-    onSuccess: () => queryClient.invalidateQueries(["thesis-applications"]),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
   })
 
   const mutationApprove = useMutation({
@@ -74,9 +73,10 @@ function Dashboard() {
         query: { application_id: id },
         requestBody: {
           status: ApplicationStatusEnum.APPROVED_BY_PROMOTER,
+          student_message: "",
         },
       }),
-    onSuccess: () => queryClient.invalidateQueries(["thesis-applications"]),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
   })
 
   const mutationReject = useMutation({
@@ -86,9 +86,10 @@ function Dashboard() {
         query: { application_id: id },
         requestBody: {
           status: ApplicationStatusEnum.REJECTED_BY_PROMOTER,
+          student_message: "",
         },
       }),
-    onSuccess: () => queryClient.invalidateQueries(["thesis-applications"]),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
   })
 
   if (isLoading) return <Text>Loading...</Text>
@@ -100,8 +101,8 @@ function Dashboard() {
     canceled_by_student: "Anulowane przez studenta",
   }
 
-  const applications = data?.data ?? []
-  const count = applications.length 
+  const applications = (data as any)?.data ?? []
+  const count = applications.length
 
   const pendingApplications = applications.filter(
     (app) => app.status === ApplicationStatusEnum.PENDING_APPROVAL
@@ -148,7 +149,6 @@ function Dashboard() {
                   {applications.map((application) => (
                     <Table.Row
                       key={application.id}
-                      sx={{ borderBottom: "1px solid", borderColor: "gray.200" }}
                     >
                       <Table.Cell>{application.thesis_topic?.title ?? "N/A"}</Table.Cell>
                       <Table.Cell>{application.thesis_topic?.promoter?.full_name ?? "-"}</Table.Cell>
@@ -214,7 +214,6 @@ function Dashboard() {
                     {paginatedPending.map((application) => (
                       <Table.Row
                         key={application.id}
-                        sx={{ borderBottom: "1px solid", borderColor: "gray.200" }}
                       >
                         <Table.Cell>{application.thesis_topic?.title ?? "N/A"}</Table.Cell>
                         <Table.Cell>{application.student?.full_name ?? "-"}</Table.Cell>
@@ -279,7 +278,6 @@ function Dashboard() {
                     {paginatedHandled.map((application) => (
                       <Table.Row
                         key={application.id}
-                        sx={{ borderBottom: "1px solid", borderColor: "gray.200" }}
                       >
                         <Table.Cell>{application.thesis_topic?.title ?? "N/A"}</Table.Cell>
                         <Table.Cell>{application.student?.full_name ?? "-"}</Table.Cell>
