@@ -6,7 +6,7 @@ import {
   Table,
   VStack,
   Button,
-  Text,
+  Text
 } from "@chakra-ui/react"
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
