@@ -1,3 +1,4 @@
+
 import {
   Container,
   EmptyState,
@@ -27,7 +28,7 @@ import {
   PaginationRoot,
 } from "@/components/ui/pagination.tsx"
 import AddThesis from "@/components/Thesis/AddThesis"
-
+import { Link } from "@tanstack/react-router"
 const thesisSearchSchema = z.object({
   page: z.number().catch(1),
 })
@@ -113,22 +114,26 @@ function ThesisTable() {
       <Table.Root size={{ base: "sm", md: "md" }}>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader>Title</Table.ColumnHeader>
-            <Table.ColumnHeader>Study Stage</Table.ColumnHeader>
-            <Table.ColumnHeader>Slots (Total/Avail)</Table.ColumnHeader>
+            <Table.ColumnHeader>Tytuł</Table.ColumnHeader>
+            <Table.ColumnHeader>Etap</Table.ColumnHeader>
+            <Table.ColumnHeader>Miejsca</Table.ColumnHeader>
             <Table.ColumnHeader>Status</Table.ColumnHeader>
-            <Table.ColumnHeader>Promoter</Table.ColumnHeader>
-            <Table.ColumnHeader>Language</Table.ColumnHeader>
-            <Table.ColumnHeader>Department</Table.ColumnHeader>
-            <Table.ColumnHeader>Created At</Table.ColumnHeader>
-            <Table.ColumnHeader>Updated At</Table.ColumnHeader>
-            <Table.ColumnHeader>Actions</Table.ColumnHeader>
+            <Table.ColumnHeader>Promotor</Table.ColumnHeader>
+            <Table.ColumnHeader>Język</Table.ColumnHeader>
+            <Table.ColumnHeader>Wydział</Table.ColumnHeader>
+            <Table.ColumnHeader>Utworzono</Table.ColumnHeader>
+            <Table.ColumnHeader>Zaktualizowano</Table.ColumnHeader>
+            <Table.ColumnHeader>Akcje</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
           {filteredTheses.map((thesis) => (
             <Table.Row key={thesis.id} opacity={isPlaceholderData ? 0.5 : 1}>
-              <Table.Cell>{thesis.title}</Table.Cell>
+                <Table.Cell>
+                  <Link to="/$id" params={{ id: thesis.id }}>
+                    {thesis.title}
+                  </Link>
+                </Table.Cell>
               <Table.Cell>{capitalize(thesis.target_study_stage)}</Table.Cell>
               <Table.Cell>
                 {thesis.slots_total} / {thesis.slots_available}
