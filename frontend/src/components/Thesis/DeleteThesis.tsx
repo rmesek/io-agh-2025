@@ -1,18 +1,19 @@
-import { Button, DialogTitle, Text } from "@chakra-ui/react"
+import { Button, Text } from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { FiTrash2 } from "react-icons/fi"
+import { useNavigate } from "@tanstack/react-router"
 
 import { ThesisService } from "@/client"
 import {
-  //DialogActionTrigger,
   DialogBody,
   DialogCloseTrigger,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogRoot,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -21,6 +22,7 @@ const DeleteThesis = ({ id }: { id: string }) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const navigate = useNavigate()
   const {
     handleSubmit,
     formState: { isSubmitting },
@@ -35,6 +37,7 @@ const DeleteThesis = ({ id }: { id: string }) => {
     onSuccess: () => {
       showSuccessToast("The thesis topic was deleted successfully")
       setIsOpen(false)
+      navigate({ to: "/thesis" })
     },
     onError: () => {
       showErrorToast("An error occurred while deleting the thesis topic")

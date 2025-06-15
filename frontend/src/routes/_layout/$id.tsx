@@ -1,3 +1,6 @@
+
+
+
 import {
   Box,
   Button,
@@ -11,10 +14,10 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { ThesisService, ThesisApplicationService, UsersService } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
-
+import { ThesisActionsMenu } from "@/components/Common/ThesisActionsMenu"
 export const Route = createFileRoute("/_layout/$id")({
   component: ThesisDetails,
 })
@@ -22,7 +25,10 @@ export const Route = createFileRoute("/_layout/$id")({
 function ThesisDetails() {
   const { id } = Route.useParams()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+
+  const currentUser = queryClient.getQueryData(["currentUser"]) as { id: string; role: string }
 
   const { data: thesis } = useQuery({
     queryKey: ["thesis-topic", id],
@@ -32,6 +38,7 @@ function ThesisDetails() {
   const { data: applications } = useQuery({
     queryKey: ["thesis-applications"],
     queryFn: () => ThesisApplicationService.readThesisApplicationsStudent(),
+    enabled: currentUser?.role === "student",
   })
 
   const { data: promoters } = useQuery({
@@ -54,6 +61,18 @@ function ThesisDetails() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: () => ThesisService.deleteThesisTopic({ id }),
+    onSuccess: () => {
+      showSuccessToast("Temat został usunięty.")
+      queryClient.invalidateQueries({ queryKey: ["thesis-topics"] })
+      navigate({ to: "/thesis" })
+    },
+    onError: (error) => {
+      showErrorToast((error as any)?.body?.message || "Nie udało się usunąć tematu.")
+    },
+  })
+
   const hasApplied = applications?.data.some(
     (app) => app.thesis_topic.id === thesis?.id
   )
@@ -63,6 +82,9 @@ function ThesisDetails() {
 
   if (!thesis) return <Text>Ładowanie...</Text>
 
+  const isPromoter = currentUser?.role === "promoter" && currentUser?.id === thesis.promoter_id
+  const isStudent = currentUser?.role === "student"
+
   return (
     <Container maxW="6xl" py={8}>
       <Box borderWidth="1px" borderRadius="xl" p={8} boxShadow="md">
@@ -71,8 +93,7 @@ function ThesisDetails() {
         </Heading>
 
         <Flex direction={{ base: "column", md: "row" }} gap={10}>
-          {/* Lewa kolumna - opis + język, wydział, promotor */}
-          <VStack align="start"  flex={3}>
+          <VStack align="start" flex={3}>
             <Box width="100%">
               <Text fontWeight="bold" fontSize="lg" mb={2}>
                 Opis
@@ -90,44 +111,54 @@ function ThesisDetails() {
             </Grid>
           </VStack>
 
-          {/* Prawa kolumna - status, sloty i daty */}
-          <Box flex={1} borderLeft="1px solid" borderColor="gray.200" pl={6}>
-            <Stack >
-              <Info label="Status" value={thesis.status} />
-              <Info
-                label="Sloty"
-                value={`${thesis.slots_total} / ${thesis.slots_available}`}
-              />
-              <Info
-                label="Utworzono"
-                value={new Date(thesis.created_at).toLocaleDateString()}
-              />
-              <Info
-                label="Zaktualizowano"
-                value={new Date(thesis.updated_at).toLocaleDateString()}
-              />
-            </Stack>
+ <Box flex={1} borderLeft="1px solid" borderColor="gray.200" pl={6}>
+  <Stack>
+    <Info label="Status" value={thesis.status} />
+    <Info
+      label="Sloty"
+      value={`${thesis.slots_total} / ${thesis.slots_available}`}
+    />
+    <Info
+      label="Utworzono"
+      value={new Date(thesis.created_at).toLocaleDateString()}
+    />
+    <Info
+      label="Zaktualizowano"
+      value={new Date(thesis.updated_at).toLocaleDateString()}
+    />
 
-            <Flex mt={8} justify="flex-end">
-              <Stack>
-                <Button
-                  colorScheme="teal"
-                  onClick={() => applyMutation.mutate()}
-                  disabled={isClosed || hasApplied}
-                  size="lg"
-                >
-                  Aplikuj
-                </Button>
-                {(isClosed || hasApplied) && (
-                  <Text fontSize="sm" color="red.500">
-                    {isClosed
-                      ? "Ten temat jest zamknięty lub brak dostępnych miejsc."
-                      : "Już zgłosiłeś się na ten temat."}
-                  </Text>
-                )}
-              </Stack>
-            </Flex>
-          </Box>
+    {isPromoter && (
+      <GridItem mb={3}>
+        <Text fontWeight="semibold" color="gray.600" fontSize="sm">
+          Akcje
+        </Text>
+        <ThesisActionsMenu thesis={thesis} />
+      </GridItem>
+    )}
+  </Stack>
+
+  {isStudent && (
+    <Flex mt={8} justify="flex-end">
+      <Stack>
+        <Button
+          colorScheme="teal"
+          onClick={() => applyMutation.mutate()}
+          disabled={isClosed || hasApplied}
+          size="lg"
+        >
+          Aplikuj
+        </Button>
+        {(isClosed || hasApplied) && (
+          <Text fontSize="sm" color="red.500">
+            {isClosed
+              ? "Ten temat jest zamknięty lub brak dostępnych miejsc."
+              : "Już zgłosiłeś się na ten temat."}
+          </Text>
+        )}
+      </Stack>
+    </Flex>
+  )}
+</Box>
         </Flex>
       </Box>
     </Container>
