@@ -63,8 +63,7 @@ function UsersTable() {
           <Table.Row>
             <Table.ColumnHeader w="sm">Full name</Table.ColumnHeader>
             <Table.ColumnHeader w="sm">Email</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Role</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Status</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">Rola</Table.ColumnHeader> 
             <Table.ColumnHeader w="sm">Actions</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
@@ -82,10 +81,14 @@ function UsersTable() {
               <Table.Cell truncate maxW="sm">
                 {user.email}
               </Table.Cell>
+
               <Table.Cell>
-                {user.is_superuser ? "Superuser" : "User"}
+                {user.role === "promoter"
+                  ? "Promotor"
+                  : user.role === "student"
+                  ? "Student"
+                  : "Brak"}
               </Table.Cell>
-              <Table.Cell>{user.is_active ? "Active" : "Inactive"}</Table.Cell>
               <Table.Cell>
                 <UserActionsMenu
                   user={user}
