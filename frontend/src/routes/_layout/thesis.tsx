@@ -1,4 +1,3 @@
-
 import {
   Container,
   EmptyState,
@@ -7,11 +6,11 @@ import {
   Table,
   VStack,
 } from "@chakra-ui/react"
-import { useQuery } from "@tanstack/react-query"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
-import { useQueryClient } from "@tanstack/react-query"
+
 import {
   ThesisService,
   type ThesisTopicPublic,
@@ -28,7 +27,7 @@ import {
   PaginationRoot,
 } from "@/components/ui/pagination.tsx"
 import AddThesis from "@/components/Thesis/AddThesis"
-import { Link } from "@tanstack/react-router"
+
 const thesisSearchSchema = z.object({
   page: z.number().catch(1),
 })
@@ -52,7 +51,7 @@ export const Route = createFileRoute("/_layout/thesis")({
 })
 
 function capitalize(text?: string | null) {
-  return text ? text.charAt(0).toUpperCase() + text.slice(1) : "N/A"
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : "Brak"
 }
 
 function ThesisTable() {
@@ -99,9 +98,9 @@ function ThesisTable() {
             <FiSearch />
           </EmptyState.Indicator>
           <VStack textAlign="center">
-            <EmptyState.Title>No thesis topics found</EmptyState.Title>
+            <EmptyState.Title>Nie znaleziono tematów prac</EmptyState.Title>
             <EmptyState.Description>
-              Add a new thesis topic to get started
+              Dodaj nowy temat pracy dyplomowej, aby rozpocząć
             </EmptyState.Description>
           </VStack>
         </EmptyState.Content>
@@ -129,11 +128,11 @@ function ThesisTable() {
         <Table.Body>
           {filteredTheses.map((thesis) => (
             <Table.Row key={thesis.id} opacity={isPlaceholderData ? 0.5 : 1}>
-                <Table.Cell>
-                  <Link to="/$id" params={{ id: thesis.id }}>
-                    {thesis.title}
-                  </Link>
-                </Table.Cell>
+              <Table.Cell>
+                <Link to="/$id" params={{ id: thesis.id }}>
+                  {thesis.title}
+                </Link>
+              </Table.Cell>
               <Table.Cell>{capitalize(thesis.target_study_stage)}</Table.Cell>
               <Table.Cell>
                 {thesis.slots_total} / {thesis.slots_available}
@@ -142,11 +141,11 @@ function ThesisTable() {
               <Table.Cell>
                 {
                   promoters?.find((user) => user.id === thesis.promoter_id)
-                    ?.full_name ?? "N/A"
+                    ?.full_name ?? "Brak"
                 }
               </Table.Cell>
-              <Table.Cell>{thesis.language || "N/A"}</Table.Cell>
-              <Table.Cell>{thesis.department || "N/A"}</Table.Cell>
+              <Table.Cell>{thesis.language || "Brak"}</Table.Cell>
+              <Table.Cell>{thesis.department || "Brak"}</Table.Cell>
               <Table.Cell>
                 {new Date(thesis.created_at).toLocaleDateString()}
               </Table.Cell>
@@ -182,7 +181,7 @@ function Thesis() {
   return (
     <Container maxW="full" py={8}>
       <Flex justify="space-between" align="center" mb={8}>
-        <Heading size="lg">Thesis Topics Management</Heading>
+        <Heading size="lg">Zarządzanie tematami prac</Heading>
         <AddThesis />
       </Flex>
       <ThesisTable />
