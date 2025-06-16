@@ -35,7 +35,7 @@ interface ThesisCreateForm {
   status: "open" | "closed"
   language?: string | null
   department?: string | null
-  keywords?: string // comma-separated string in UI
+  keywords?: string // ciąg znaków oddzielony przecinkami w UI
 }
 
 const AddThesis = () => {
@@ -81,7 +81,7 @@ const AddThesis = () => {
       return ThesisService.createThesisTopicMe({ requestBody })
     },
     onSuccess: () => {
-      showSuccessToast("Thesis created successfully.")
+      showSuccessToast("Temat pracy dyplomowej został pomyślnie utworzony.")
       reset()
       setIsOpen(false)
     },
@@ -107,67 +107,67 @@ const AddThesis = () => {
       <DialogTrigger asChild>
         <Button my={4}>
           <FaPlus fontSize="16px" />
-          Add Thesis
+          Dodaj pracę dyplomową
         </Button>
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Add Thesis</DialogTitle>
+            <DialogTitle>Dodaj pracę dyplomową</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <Text mb={4}>Fill in the details to add a new thesis.</Text>
+            <Text mb={4}>Wypełnij dane, aby dodać nowy temat pracy dyplomowej.</Text>
             <VStack gap={4}>
               <Field
                 required
                 invalid={!!errors.title}
                 errorText={errors.title?.message}
-                label="Title"
+                label="Tytuł"
               >
                 <Input
                   id="title"
-                  {...register("title", { required: "Title is required" })}
-                  placeholder="Title"
+                  {...register("title", { required: "Tytuł jest wymagany" })}
+                  placeholder="Tytuł"
                   type="text"
                 />
               </Field>
 
-              <Field label="Description">
+              <Field label="Opis">
                 <Input
                   id="description"
                   {...register("description")}
-                  placeholder="Description"
+                  placeholder="Opis"
                   type="text"
                 />
               </Field>
 
-              <Field label="Target Study Stage">
+              <Field label="Docelowy etap studiów">
                 <Controller
                   name="target_study_stage"
                   control={control}
                   render={({ field }) => (
                     <RadioGroup value={field.value} onChange={field.onChange}>
-                      <Radio value="bachelor">Bachelor</Radio>
-                      <Radio value="master">Master</Radio>
-                      <Radio value="any">Any</Radio>
+                      <Radio value="bachelor">Licencjat</Radio>
+                      <Radio value="master">Magister</Radio>
+                      <Radio value="any">Dowolny</Radio>
                     </RadioGroup>
                   )}
                 />
               </Field>
 
-              <Field label="Slots Total">
+              <Field label="Liczba miejsc ogółem">
                 <Input
                   type="number"
                   {...register("slots_total", { valueAsNumber: true })}
-                  placeholder="Total Slots"
+                  placeholder="Liczba miejsc ogółem"
                 />
               </Field>
 
-              <Field label="Slots Available">
+              <Field label="Liczba dostępnych miejsc">
                 <Input
                   type="number"
                   {...register("slots_available", { valueAsNumber: true })}
-                  placeholder="Available Slots"
+                  placeholder="Liczba dostępnych miejsc"
                 />
               </Field>
 
@@ -177,36 +177,36 @@ const AddThesis = () => {
                   control={control}
                   render={({ field }) => (
                     <RadioGroup value={field.value} onChange={field.onChange}>
-                      <Radio value="open">Open</Radio>
-                      <Radio value="closed">Closed</Radio>
+                      <Radio value="open">Otwarte</Radio>
+                      <Radio value="closed">Zamknięte</Radio>
                     </RadioGroup>
                   )}
                 />
               </Field>
 
-              <Field label="Language">
+              <Field label="Język">
                 <Input
                   id="language"
                   {...register("language")}
-                  placeholder="e.g., English"
+                  placeholder="np. Angielski"
                   type="text"
                 />
               </Field>
 
-              <Field label="Department">
+              <Field label="Wydział">
                 <Input
                   id="department"
                   {...register("department")}
-                  placeholder="e.g., Computer Science"
+                  placeholder="np. Informatyka"
                   type="text"
                 />
               </Field>
 
-              <Field label="Keywords (comma separated)">
+              <Field label="Słowa kluczowe (oddzielone przecinkami)">
                 <Input
                   id="keywords"
                   {...register("keywords")}
-                  placeholder="e.g., AI, Machine Learning, NLP"
+                  placeholder="np. AI, Uczenie maszynowe, NLP"
                   type="text"
                 />
               </Field>
@@ -216,10 +216,10 @@ const AddThesis = () => {
             <DialogActionTrigger asChild>
               <Button
                 variant="subtle"
-                colorPalette="gray"
+                colorScheme="gray"
                 disabled={isSubmitting}
               >
-                Cancel
+                Anuluj
               </Button>
             </DialogActionTrigger>
             <Button
@@ -228,7 +228,7 @@ const AddThesis = () => {
               disabled={!isValid || isSubmitting}
               loading={isSubmitting}
             >
-              Save
+              Zapisz
             </Button>
           </DialogFooter>
         </form>

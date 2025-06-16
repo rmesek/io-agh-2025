@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_layout/topics")({
 })
 
 function capitalize(text?: string | null) {
-  return text ? text.charAt(0).toUpperCase() + text.slice(1) : "N/A"
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : "Brak"
 }
 
 function ThesisTable() {
@@ -138,10 +138,10 @@ function ThesisTable() {
                 </Table.Cell>
                 <Table.Cell>{capitalize(thesis.status)}</Table.Cell>
                 <Table.Cell>
-                  {promoters?.find((p) => p.id === thesis.promoter_id)?.full_name || "N/A"}
+                  {promoters?.find((p) => p.id === thesis.promoter_id)?.full_name || "Brak"}
                 </Table.Cell>
-                <Table.Cell>{thesis.language || "N/A"}</Table.Cell>
-                <Table.Cell>{thesis.department || "N/A"}</Table.Cell>
+                <Table.Cell>{thesis.language || "Brak"}</Table.Cell>
+                <Table.Cell>{thesis.department || "Brak"}</Table.Cell>
                 <Table.Cell>{new Date(thesis.created_at).toLocaleDateString()}</Table.Cell>
                 <Table.Cell>
                   <Flex direction="column" gap={1}>
@@ -162,7 +162,7 @@ function ThesisTable() {
                       hasApplied) && (
                       <Text fontSize="sm" color="red.500">
                         {hasApplied
-                          ? "Już zgłoszony"
+                          ? "Już zgłoszono"
                           : thesis.slots_available === 0
                           ? "Brak miejsc"
                           : "Temat zamknięty"}

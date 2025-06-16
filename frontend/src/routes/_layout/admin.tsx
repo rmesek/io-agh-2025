@@ -61,20 +61,20 @@ function UsersTable() {
       <Table.Root size={{ base: "sm", md: "md" }}>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader w="sm">Full name</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">Imię i nazwisko</Table.ColumnHeader>
             <Table.ColumnHeader w="sm">Email</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Rola</Table.ColumnHeader> 
-            <Table.ColumnHeader w="sm">Actions</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">Rola</Table.ColumnHeader>
+            <Table.ColumnHeader w="sm">Akcje</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
           {users?.map((user) => (
             <Table.Row key={user.id} opacity={isPlaceholderData ? 0.5 : 1}>
               <Table.Cell color={!user.full_name ? "gray" : "inherit"}>
-                {user.full_name || "N/A"}
+                {user.full_name || "Brak"}
                 {currentUser?.id === user.id && (
                   <Badge ml="1" colorScheme="teal">
-                    You
+                    Ty
                   </Badge>
                 )}
               </Table.Cell>
@@ -120,7 +120,7 @@ function Admin() {
   return (
     <Container maxW="full">
       <Heading size="lg" pt={12}>
-        Users Management
+        Zarządzanie użytkownikami
       </Heading>
 
       <AddUser />

@@ -60,7 +60,7 @@ const AddUser = () => {
     mutationFn: (data: UserCreate) =>
       UsersService.createUser({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("User created successfully.")
+      showSuccessToast("Użytkownik został pomyślnie dodany.")
       reset()
       setIsOpen(false)
     },
@@ -86,7 +86,7 @@ const AddUser = () => {
       <DialogTrigger asChild>
         <Button value="add-user" my={4}>
           <FaPlus fontSize="16px" />
-          Add User
+          Dodaj użytkownika
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -111,7 +111,7 @@ const AddUser = () => {
                     required: "Email jest wymagany",
                     pattern: emailPattern,
                   })}
-                  placeholder="Email"
+                  placeholder="Wpisz email"
                   type="email"
                 />
               </Field>
@@ -124,7 +124,7 @@ const AddUser = () => {
                 <Input
                   id="name"
                   {...register("full_name")}
-                  placeholder="Full name"
+                  placeholder="Wpisz imię i nazwisko"
                   type="text"
                 />
               </Field>
@@ -144,7 +144,7 @@ const AddUser = () => {
                       message: "Hasło musi mieć co najmniej 8 znaków",
                     },
                   })}
-                  placeholder="Password"
+                  placeholder="Wpisz hasło"
                   type="password"
                 />
               </Field>
@@ -163,7 +163,7 @@ const AddUser = () => {
                       value === getValues().password ||
                       "Hasła nie są takie same",
                   })}
-                  placeholder="Password"
+                  placeholder="Potwierdź hasło"
                   type="password"
                 />
               </Field>
@@ -179,7 +179,7 @@ const AddUser = () => {
                       checked={field.value}
                       onCheckedChange={({ checked }) => field.onChange(checked)}
                     >
-                      Is superuser?
+                      Czy użytkownik ma uprawnienia administratora?
                     </Checkbox>
                   </Field>
                 )}
@@ -193,7 +193,7 @@ const AddUser = () => {
                       checked={field.value}
                       onCheckedChange={({ checked }) => field.onChange(checked)}
                     >
-                      Is active?
+                      Czy użytkownik jest aktywny?
                     </Checkbox>
                   </Field>
                 )}
