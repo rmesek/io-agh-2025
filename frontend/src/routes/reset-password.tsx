@@ -54,7 +54,7 @@ function ResetPassword() {
   const mutation = useMutation({
     mutationFn: resetPassword,
     onSuccess: () => {
-      showSuccessToast("Password updated successfully.")
+      showSuccessToast("Hasło zostało pomyślnie zaktualizowane.")
       reset()
       navigate({ to: "/login" })
     },
@@ -79,27 +79,27 @@ function ResetPassword() {
       centerContent
     >
       <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
-        Reset Password
+        Resetowanie hasła
       </Heading>
       <Text textAlign="center">
-        Please enter your new password and confirm it to reset your password.
+        Wprowadź nowe hasło i potwierdź je, aby zresetować swoje hasło.
       </Text>
       <PasswordInput
         startElement={<FiLock />}
         type="new_password"
         errors={errors}
         {...register("new_password", passwordRules())}
-        placeholder="New Password"
+        placeholder="Nowe hasło"
       />
       <PasswordInput
         startElement={<FiLock />}
         type="confirm_password"
         errors={errors}
         {...register("confirm_password", confirmPasswordRules(getValues))}
-        placeholder="Confirm Password"
+        placeholder="Potwierdź hasło"
       />
       <Button variant="solid" type="submit">
-        Reset Password
+        Zresetuj hasło
       </Button>
     </Container>
   )

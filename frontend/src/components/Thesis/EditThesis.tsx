@@ -50,7 +50,7 @@ interface ThesisEditForm {
   status: "open" | "closed"
   language?: string | null
   department?: string | null
-  keywords?: string // comma separated string in form
+  keywords?: string // ciąg znaków oddzielonych przecinkami w formularzu
 }
 
 interface EditThesisProps {
@@ -112,7 +112,7 @@ const EditThesis = ({ thesisId }: EditThesisProps) => {
 
   const mutation = useMutation({
     mutationFn: (formData: ThesisEditForm) => {
-      // Zamiana keywords string na tablicę
+      // Zamiana ciągu keywords na tablicę
       const keywordsArray = formData.keywords
         ? formData.keywords
             .split(",")
@@ -131,7 +131,7 @@ const EditThesis = ({ thesisId }: EditThesisProps) => {
       })
     },
     onSuccess: () => {
-      showSuccessToast("Thesis updated successfully.")
+      showSuccessToast("Praca dyplomowa została zaktualizowana pomyślnie.")
       setIsOpen(false)
       queryClient.invalidateQueries({ queryKey: ["thesis-topics"] })
       queryClient.invalidateQueries({ queryKey: ["thesis-topic", thesisId] })
@@ -155,69 +155,69 @@ const EditThesis = ({ thesisId }: EditThesisProps) => {
       <DialogTrigger asChild>
         <Button variant="ghost">
           <FaEdit fontSize="16px" />
-          Edit Thesis
+          Edytuj pracę dyplomową
         </Button>
       </DialogTrigger>
 
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Edit Thesis</DialogTitle>
+            <DialogTitle>Edytuj pracę dyplomową</DialogTitle>
           </DialogHeader>
 
           <DialogBody>
-            <Text mb={4}>Update the thesis details below.</Text>
+            <Text mb={4}>Zaktualizuj poniżej szczegóły pracy dyplomowej.</Text>
             <VStack gap={4}>
               <Field
                 required
                 invalid={!!errors.title}
                 errorText={errors.title?.message}
-                label="Title"
+                label="Tytuł"
               >
                 <Input
                   id="title"
-                  {...register("title", { required: "Title is required" })}
-                  placeholder="Title"
+                  {...register("title", { required: "Tytuł jest wymagany" })}
+                  placeholder="Tytuł"
                   type="text"
                 />
               </Field>
 
-              <Field invalid={!!errors.description} errorText={errors.description?.message} label="Description">
+              <Field invalid={!!errors.description} errorText={errors.description?.message} label="Opis">
                 <Input
                   id="description"
                   {...register("description")}
-                  placeholder="Description"
+                  placeholder="Opis"
                   type="text"
                 />
               </Field>
 
-              <Field label="Target Study Stage">
+              <Field label="Docelowy etap studiów">
                 <Controller
                   name="target_study_stage"
                   control={control}
                   render={({ field }) => (
                     <RadioGroup value={field.value} onChange={field.onChange}>
-                      <Radio value="bachelor">Bachelor</Radio>
-                      <Radio value="master">Master</Radio>
-                      <Radio value="any">Any</Radio>
+                      <Radio value="bachelor">Licencjat</Radio>
+                      <Radio value="master">Magister</Radio>
+                      <Radio value="any">Dowolny</Radio>
                     </RadioGroup>
                   )}
                 />
               </Field>
 
-              <Field label="Slots Total">
+              <Field label="Całkowita liczba miejsc">
                 <Input
                   type="number"
                   {...register("slots_total", { valueAsNumber: true, min: 0 })}
-                  placeholder="Total Slots"
+                  placeholder="Całkowita liczba miejsc"
                 />
               </Field>
 
-              <Field label="Slots Available">
+              <Field label="Dostępne miejsca">
                 <Input
                   type="number"
                   {...register("slots_available", { valueAsNumber: true, min: 0 })}
-                  placeholder="Available Slots"
+                  placeholder="Dostępne miejsca"
                 />
               </Field>
 
@@ -227,36 +227,36 @@ const EditThesis = ({ thesisId }: EditThesisProps) => {
                   control={control}
                   render={({ field }) => (
                     <RadioGroup value={field.value} onChange={field.onChange}>
-                      <Radio value="open">Open</Radio>
-                      <Radio value="closed">Closed</Radio>
+                      <Radio value="open">Otwarte</Radio>
+                      <Radio value="closed">Zamknięte</Radio>
                     </RadioGroup>
                   )}
                 />
               </Field>
 
-              <Field label="Language">
+              <Field label="Język">
                 <Input
                   id="language"
                   {...register("language")}
-                  placeholder="e.g., English"
+                  placeholder="np. Angielski"
                   type="text"
                 />
               </Field>
 
-              <Field label="Department">
+              <Field label="Wydział">
                 <Input
                   id="department"
                   {...register("department")}
-                  placeholder="e.g., Computer Science"
+                  placeholder="np. Informatyka"
                   type="text"
                 />
               </Field>
 
-              <Field label="Keywords (comma separated)">
+              <Field label="Słowa kluczowe (oddzielone przecinkami)">
                 <Input
                   id="keywords"
                   {...register("keywords")}
-                  placeholder="e.g., AI, Machine Learning, NLP"
+                  placeholder="np. AI, Uczenie maszynowe, NLP"
                   type="text"
                 />
               </Field>
@@ -267,11 +267,11 @@ const EditThesis = ({ thesisId }: EditThesisProps) => {
             <ButtonGroup>
               <DialogActionTrigger asChild>
                 <Button variant="subtle" colorScheme="gray" disabled={isSubmitting}>
-                  Cancel
+                  Anuluj
                 </Button>
               </DialogActionTrigger>
               <Button variant="solid" type="submit" loading={isSubmitting} disabled={!isValid}>
-                Save
+                Zapisz
               </Button>
             </ButtonGroup>
           </DialogFooter>

@@ -45,7 +45,7 @@ const ChangePassword = () => {
     <>
       <Container maxW="full">
         <Heading size="sm" py={4}>
-          Change Password
+          Zmień hasło
         </Heading>
         <Box as="form" onSubmit={handleSubmit(onSubmit)}>
           <VStack gap={4} w={{ base: "100%", md: "sm" }}>
@@ -53,23 +53,24 @@ const ChangePassword = () => {
               type="current_password"
               startElement={<FiLock />}
               {...register("current_password", passwordRules())}
-              placeholder="Current Password"
+              placeholder="Aktualne hasło"
               errors={errors}
             />
             <PasswordInput
               type="new_password"
               startElement={<FiLock />}
               {...register("new_password", passwordRules())}
-              placeholder="New Password"
+              placeholder="Nowe hasło"
               errors={errors}
             />
             <PasswordInput
               type="confirm_password"
               startElement={<FiLock />}
               {...register("confirm_password", confirmPasswordRules(getValues))}
-              placeholder="Confirm Password"
+              placeholder="Potwierdź hasło"
               errors={errors}
             />
+
           </VStack>
           <Button
             variant="solid"
@@ -78,7 +79,7 @@ const ChangePassword = () => {
             loading={isSubmitting}
             disabled={!isValid}
           >
-            Save
+            Zapisz
           </Button>
         </Box>
       </Container>
