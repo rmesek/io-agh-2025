@@ -32,7 +32,7 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
 
   const finalItems: Item[] = [
     ...items,
-    ...(isSuperUser ? [{ icon: FiUsers, title: "Admin", path: "/admin" }] : []),
+    ...(!(isPromotor || isStudent) ? [{ icon: FiUsers, title: "Admin", path: "/admin" }] : []),
     ...(isPromotor ? [{ icon: FiBook, title: "Prace dyplomowe", path: "/thesis" }] : []),
     ...(isStudent ? [{ icon: FiBook, title: "Tematy prac dyplomowych", path: "/topics" }] : []),
   ]
