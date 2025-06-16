@@ -50,7 +50,7 @@ const UserInformation = () => {
     mutationFn: (data: UserUpdateMe) =>
       UsersService.updateUserMe({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("User updated successfully.")
+      showSuccessToast("Użytkownik został zaktualizowany.")
     },
     onError: (err: ApiError) => {
       handleError(err)
@@ -73,14 +73,14 @@ const UserInformation = () => {
     <>
       <Container maxW="full">
         <Heading size="sm" py={4}>
-          User Information
+          Dane użytkownika
         </Heading>
         <Box
           w={{ sm: "full", md: "sm" }}
           as="form"
           onSubmit={handleSubmit(onSubmit)}
         >
-          <Field label="Full name">
+          <Field label="Imię i nazwisko">
             {editMode ? (
               <Input
                 {...register("full_name", { maxLength: 30 })}
@@ -95,7 +95,7 @@ const UserInformation = () => {
                 truncate
                 maxW="sm"
               >
-                {currentUser?.full_name || "N/A"}
+                {currentUser?.full_name || "Brak danych"}
               </Text>
             )}
           </Field>
@@ -108,7 +108,7 @@ const UserInformation = () => {
             {editMode ? (
               <Input
                 {...register("email", {
-                  required: "Email is required",
+                  required: "Email jest wymagany",
                   pattern: emailPattern,
                 })}
                 type="email"
@@ -124,11 +124,11 @@ const UserInformation = () => {
             <Button
               variant="solid"
               onClick={toggleEditMode}
-              type={editMode ? "button" : "submit"}
+              type={editMode ? "submit" : "button"}
               loading={editMode ? isSubmitting : false}
               disabled={editMode ? !isDirty || !getValues("email") : false}
             >
-              {editMode ? "Save" : "Edit"}
+              {editMode ? "Zapisz" : "Edytuj"}
             </Button>
             {editMode && (
               <Button
@@ -137,7 +137,7 @@ const UserInformation = () => {
                 onClick={onCancel}
                 disabled={isSubmitting}
               >
-                Cancel
+                Anuluj
               </Button>
             )}
           </Flex>

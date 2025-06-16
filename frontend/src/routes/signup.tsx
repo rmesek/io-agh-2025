@@ -83,9 +83,13 @@ function SignUp() {
                 id="full_name"
                 minLength={3}
                 {...register("full_name", {
-                  required: "Full Name is required",
+                  required: "Imię i nazwisko jest wymagane",
+                  minLength: {
+                    value: 3,
+                    message: "Imię i nazwisko musi mieć minimum 3 znaki",
+                  },
                 })}
-                placeholder="Full Name"
+                placeholder="Imię i nazwisko"
                 type="text"
               />
             </InputGroup>
@@ -96,7 +100,7 @@ function SignUp() {
               <Input
                 id="email"
                 {...register("email", {
-                  required: "Email is required",
+                  required: "Email jest wymagany",
                   pattern: emailPattern,
                 })}
                 placeholder="Email"
@@ -108,23 +112,23 @@ function SignUp() {
             type="password"
             startElement={<FiLock />}
             {...register("password", passwordRules())}
-            placeholder="Password"
+            placeholder="Hasło"
             errors={errors}
           />
           <PasswordInput
             type="confirm_password"
             startElement={<FiLock />}
             {...register("confirm_password", confirmPasswordRules(getValues))}
-            placeholder="Confirm Password"
+            placeholder="Potwierdź hasło"
             errors={errors}
           />
           <Button variant="solid" type="submit" loading={isSubmitting}>
-            Sign Up
+            Zarejestruj się
           </Button>
           <Text>
-            Already have an account?{" "}
+            Masz już konto?{" "}
             <RouterLink to="/login" className="main-link">
-              Log In
+              Zaloguj się
             </RouterLink>
           </Text>
         </Container>

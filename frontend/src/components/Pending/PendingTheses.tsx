@@ -5,10 +5,10 @@ const PendingTheses = () => (
   <Table.Root size={{ base: "sm", md: "md" }}>
     <Table.Header>
       <Table.Row>
-        <Table.ColumnHeader w="sm">Title</Table.ColumnHeader>
-        <Table.ColumnHeader w="sm">Description</Table.ColumnHeader>
+        <Table.ColumnHeader w="sm">Tytuł</Table.ColumnHeader>
+        <Table.ColumnHeader w="sm">Opis</Table.ColumnHeader>
         <Table.ColumnHeader w="sm">Status</Table.ColumnHeader>
-        <Table.ColumnHeader w="sm">Actions</Table.ColumnHeader>
+        <Table.ColumnHeader w="sm">Akcje</Table.ColumnHeader>
       </Table.Row>
     </Table.Header>
     <Table.Body>

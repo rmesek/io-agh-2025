@@ -35,12 +35,12 @@ const DeleteThesis = ({ id }: { id: string }) => {
   const mutation = useMutation({
     mutationFn: deleteThesis,
     onSuccess: () => {
-      showSuccessToast("The thesis topic was deleted successfully")
+      showSuccessToast("Temat pracy dyplomowej został pomyślnie usunięty")
       setIsOpen(false)
       navigate({ to: "/thesis" })
     },
     onError: () => {
-      showErrorToast("An error occurred while deleting the thesis topic")
+      showErrorToast("Wystąpił błąd podczas usuwania tematu pracy dyplomowej")
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["thesis-topics"] })
@@ -60,9 +60,9 @@ const DeleteThesis = ({ id }: { id: string }) => {
       onOpenChange={({ open }) => setIsOpen(open)}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" colorPalette="red">
+        <Button variant="ghost" size="sm" colorScheme="red">
           <FiTrash2 fontSize="16px" />
-          Delete Thesis
+          Usuń pracę dyplomową
         </Button>
       </DialogTrigger>
 
@@ -70,28 +70,27 @@ const DeleteThesis = ({ id }: { id: string }) => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogCloseTrigger />
           <DialogHeader>
-            <DialogTitle>Delete Thesis Topic</DialogTitle>
+            <DialogTitle>Usuń temat pracy dyplomowej</DialogTitle>
           </DialogHeader>
           <DialogBody>
             <Text mb={4}>
-              This thesis topic will be permanently deleted. Are you sure? You will not
-              be able to undo this action.
+              Ten temat pracy dyplomowej zostanie trwale usunięty. Czy na pewno chcesz kontynuować? Nie będziesz mógł cofnąć tej akcji.
             </Text>
           </DialogBody>
 
           <DialogFooter gap={2}>
             <DialogCloseTrigger asChild>
-              <Button variant="subtle" colorPalette="gray" disabled={isSubmitting}>
-                Cancel
+              <Button variant="subtle" colorScheme="gray" disabled={isSubmitting}>
+                Anuluj
               </Button>
             </DialogCloseTrigger>
             <Button
               variant="solid"
-              colorPalette="red"
+              colorScheme="red"
               type="submit"
               loading={isSubmitting}
             >
-              Delete
+              Usuń
             </Button>
           </DialogFooter>
         </form>
