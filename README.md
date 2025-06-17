@@ -19,38 +19,53 @@
 
 ## Instalacja zależności
 
-TODO
+Wymagane oprogramowanie w celu lokalnego uruchomienia:
+- [Node.js](https://nodejs.org/en/download)
+- [Astral UV](https://docs.astral.sh/uv/getting-started/installation/)
+- [Docker Engine](https://docs.docker.com/engine/install/)
 
-## Uruchomienie
 
-TODO
+## Lokalne uruchomienie aplikacji
+
+Uruchomienie
+```bash
+cd frontend/
+npm install
+docker compose up -d
+uv run ../populate_db.py
+npm run dev
+```
+
+Zatrzymanie i czyszczenie bazy
+```bash
+docker compose down
+docker volume rm io-agh-2025_app-db-data
+```
+
+### Autoryzacja
+Standardowo w wersji lokalnej **hasło do każdego konta oraz serwisu** to `changethis`
+Przykładowe **adresy email** to `student1@example.com` .. `student7@example.com`
+oraz `promoter1@example.com` .. `promoter4@example.com`
+
+### Frontend
+Aplikacja powinna uruchomić się pod poniższym adresem, jednak możliwe, że został wybrany inny port, co należy zaobserwować w terminalu:
+- http://localhost:5173/
+
+### OpenAPI
+Dostęp do dokumentacji API dostępny będzie pod adresem:
+- http://localhost:8000/docs
+
+### Baza danych
+Webowy interfejs bazy danych jest dostępny pod adresem (hasło to `changethis`):
+- http://localhost:8080/?pgsql=db&username=postgres&db=app
+
 
 ## Wygląd aplikacji
 
-### Dashboard Login
+### Ekran logowania
 
-[![API docs](img/login.png)](https://github.com/fastapi/full-stack-fastapi-template)
+![API docs](img/login.png)
 
-### Dashboard - Admin
+### Ekran główny
 
-[![API docs](img/dashboard.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Dashboard - Create User
-
-[![API docs](img/dashboard-create.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Dashboard - Items
-
-[![API docs](img/dashboard-items.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Dashboard - User Settings
-
-[![API docs](img/dashboard-user-settings.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Dashboard - Dark Mode
-
-[![API docs](img/dashboard-dark.png)](https://github.com/fastapi/full-stack-fastapi-template)
-
-### Interactive API Documentation
-
-[![API docs](img/docs.png)](https://github.com/fastapi/full-stack-fastapi-template)
+![API docs](img/dashboard.png)
