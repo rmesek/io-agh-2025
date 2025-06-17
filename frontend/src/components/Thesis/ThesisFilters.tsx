@@ -136,8 +136,8 @@ const ThesisFilters = ({
                 }}
               >
                 <HStack>
-                  <Radio value="bachelor">Licencjat</Radio>
-                  <Radio value="master">Magister</Radio>
+                  <Radio value="bachelor">I stopień</Radio>
+                  <Radio value="master">II stopień</Radio>
                   <Radio value="any">Dowolny</Radio>
                 </HStack>
               </RadioGroup>

@@ -27,6 +27,7 @@ import {
   PaginationRoot,
 } from "@/components/ui/pagination.tsx"
 import AddThesis from "@/components/Thesis/AddThesis"
+import { translateStage, translateStatus } from "@/labels"
 
 const thesisSearchSchema = z.object({
   page: z.number().catch(1),
@@ -133,11 +134,11 @@ function ThesisTable() {
                   {thesis.title}
                 </Link>
               </Table.Cell>
-              <Table.Cell>{capitalize(thesis.target_study_stage)}</Table.Cell>
+              <Table.Cell>{translateStage(thesis.target_study_stage)}</Table.Cell>
               <Table.Cell>
                 {thesis.slots_total} / {thesis.slots_available}
               </Table.Cell>
-              <Table.Cell>{capitalize(thesis.status)}</Table.Cell>
+              <Table.Cell>{translateStatus(thesis.status)}</Table.Cell>
               <Table.Cell>
                 {
                   promoters?.find((user) => user.id === thesis.promoter_id)
