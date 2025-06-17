@@ -58,6 +58,7 @@ import type {
   ThesesDeleteThesisResponse,
   ThesisApplicationPublic,
   ThesisApplicationsPublic,
+  PromoterProfile,
   
 } from "./types.gen"
 
@@ -823,6 +824,25 @@ export class ThesisApplicationService {
         401: "Unauthorized",
         403: "Forbidden",
         422: "Validation Error",
+      },
+    })
+  }
+}
+
+export class PromoterProfileService {
+  /**
+   * Read Promoter Profile (Me)
+   * Get current promoter's profile.
+   * @returns PromoterProfile Successful Response
+   * @throws ApiError
+   */
+  public static readPromoterProfile(): CancelablePromise<PromoterProfile> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/promoter-profiles/me",
+      errors: {
+        401: "Unauthorized",
+        404: "Promoter profile not found",
       },
     })
   }
