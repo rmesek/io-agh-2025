@@ -26,12 +26,14 @@ import {
   PaginationRoot,
 } from "@/components/ui/pagination.tsx"
 import useCustomToast from "@/hooks/useCustomToast"
+import ThesisFilters from "@/components/Thesis/ThesisFilters"
+import { useState, useMemo } from "react"
+
+const PER_PAGE = 5
 
 const thesisSearchSchema = z.object({
   page: z.number().catch(1),
 })
-
-const PER_PAGE = 10
 
 export const Route = createFileRoute("/_layout/topics")({
   component: Thesis,
@@ -42,26 +44,33 @@ function capitalize(text?: string | null) {
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : "Brak"
 }
 
-function ThesisTable() {
+type FilterState = {
+  promoters: string[]
+  languages: string[]
+  departments: string[]
+  availablePlacesMin?: number
+  stage?: "bachelor" | "master" | "any"
+  status?: "open" | "closed"
+}
+
+function ThesisTable({ filters }: { filters: FilterState | null }) {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
+  // Fetch all promoters
   const { data: promoters } = useQuery({
     queryKey: ["promoters"],
     queryFn: () => UsersService.readUsers({}),
     select: (data) => data.data.filter((user: UserPublic) => user.role === "promoter"),
   })
 
-  const { data, isLoading, isPlaceholderData } = useQuery({
-    queryKey: ["thesis-topics", { page }],
-    queryFn: () =>
-      ThesisService.readThesisTopics({
-        skip: (page - 1) * PER_PAGE,
-        limit: PER_PAGE,
-      }),
-    placeholderData: (prevData) => prevData,
+  // Fetch all thesis topics (without pagination to allow filtering and pagination client-side)
+  // If data is too big, consider server-side filtering or pagination API changes
+  const { data: allTheses, isLoading, isPlaceholderData } = useQuery({
+    queryKey: ["thesis-topics"],
+    queryFn: () => ThesisService.readThesisTopics({ skip: 0, limit: 1000 }), // fetch max 1000 to avoid overload
   })
 
   const { data: applications } = useQuery({
@@ -85,9 +94,44 @@ function ThesisTable() {
 
   const setPage = (page: number) => navigate({ search: () => ({ page }) })
 
+  // Filtrujemy dane po stronie klienta
+  const filteredTheses = useMemo(() => {
+    if (!allTheses?.data) return []
+
+    return allTheses.data.filter((thesis) => {
+      if (filters == null) return true
+
+      // Promotorzy
+      if (filters.promoters.length > 0 && !filters.promoters.includes(thesis.promoter_id)) return false
+
+      // Języki
+      if (filters.languages.length > 0 && !filters.languages.includes(thesis.language || "")) return false
+
+      // Wydział
+      if (filters.departments.length > 0 && !filters.departments.includes(thesis.department || "")) return false
+
+      // Minimalna liczba dostępnych miejsc
+      if (filters.availablePlacesMin !== undefined && thesis.slots_available < filters.availablePlacesMin) return false
+
+      // Etap
+      if (filters.stage && filters.stage !== "any" && thesis.target_study_stage !== filters.stage) return false
+
+      // Status
+      if (filters.status && thesis.status !== filters.status) return false
+
+      return true
+    })
+  }, [allTheses, filters])
+
+  // Obcinamy dane do aktualnej strony
+  const pagedTheses = useMemo(() => {
+    const start = (page - 1) * PER_PAGE
+    return filteredTheses.slice(start, start + PER_PAGE)
+  }, [filteredTheses, page])
+
   if (isLoading) return <PendingItems />
 
-  if (!data?.data?.length) {
+  if (!pagedTheses.length) {
     return (
       <EmptyState.Root>
         <EmptyState.Content>
@@ -120,7 +164,7 @@ function ThesisTable() {
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {data.data.map((thesis) => {
+          {pagedTheses.map((thesis) => {
             const hasApplied = applications?.data.some(
               (app) => app.thesis_topic.id === thesis.id
             )
@@ -178,7 +222,7 @@ function ThesisTable() {
 
       <Flex justifyContent="flex-end" mt={4}>
         <PaginationRoot
-          count={data.data.length}
+          count={filteredTheses.length}
           pageSize={PER_PAGE}
           onPageChange={({ page }) => setPage(page)}
         >
@@ -194,12 +238,26 @@ function ThesisTable() {
 }
 
 function Thesis() {
+  const [filters, setFilters] = useState<FilterState | null>(null)
+  const navigate = useNavigate({ from: Route.fullPath })
+  const { page } = Route.useSearch()
+
+  const setPage = (page: number) => navigate({ search: () => ({ page }) })
+
   return (
     <Container maxW="full" py={8}>
       <Flex justify="space-between" align="center" mb={8}>
         <Heading size="lg">Tematy prac dyplomowych</Heading>
+        <Flex gap={2}>
+          <ThesisFilters
+            onApplyFilters={(filters) => {
+              setFilters(filters)
+              setPage(1)
+            }}
+          />
+        </Flex>
       </Flex>
-      <ThesisTable />
+      <ThesisTable filters={filters} />
     </Container>
   )
 }
