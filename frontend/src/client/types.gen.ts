@@ -339,3 +339,21 @@ export type ThesisApplicationsPublic = {
   data: ThesisApplicationPublic[]
   count: number
 }
+
+export type PromoterProfile = {
+  user_id: string
+  student_limit: number
+  academic_degree: string
+  can_supervise_bachelor: boolean
+  can_supervise_master: boolean
+  department: string
+  research_interests: string[]
+  user: {
+    email: string
+    is_active: boolean
+    is_superuser: boolean
+    full_name: string
+    role: string
+    id: string
+  }
+}

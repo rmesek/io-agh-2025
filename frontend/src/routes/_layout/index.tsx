@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { ThesisApplicationService, ApplicationStatusEnum } from "@/client"
+import { ThesisApplicationService, ApplicationStatusEnum, PromoterProfileService } from "@/client"
 import useAuth from "@/hooks/useAuth"
 import {
   PaginationItems,
@@ -26,6 +26,15 @@ function Dashboard() {
   const { user: currentUser } = useAuth()
   const isStudent = currentUser?.role === "student"
   const isPromoter = currentUser?.role === "promoter"
+  const {
+    data: promoterProfile,
+    isLoading: isLoadingProfile,
+    error: profileError,
+  } = useQuery({
+    queryKey: ["promoter-profile"],
+    queryFn: () => PromoterProfileService.readPromoterProfile(),
+    enabled: isPromoter,
+  })
   const queryClient = useQueryClient()
 
   const PER_PAGE = 5
@@ -113,6 +122,18 @@ function Dashboard() {
       app.status === ApplicationStatusEnum.REJECTED_BY_PROMOTER
   )
 
+  const approvedApplications = applications.filter(
+    (app) => app.status === ApplicationStatusEnum.APPROVED_BY_PROMOTER
+  )
+
+  const acceptedTopicIds = new Set(
+    approvedApplications.map((app) => app.thesis_topic.id)
+  )
+
+  const acceptedCount = acceptedTopicIds.size
+  const topicLimit = promoterProfile?.student_limit ?? 0
+  const isLimitReached = topicLimit > 0 && acceptedCount >= topicLimit
+
   const pendingCount = pendingApplications.length
   const handledCount = handledApplications.length
 
@@ -192,6 +213,14 @@ function Dashboard() {
       {isPromoter && (
         <Flex gap={8} direction="column">
           <Container flex={1} minW="360px">
+          <Heading size="md" mb={2}>
+                Przyjęte prace: {acceptedCount} / {topicLimit || "Brak limitu"}
+              </Heading>
+              {isLimitReached && (
+                <Text color="red.500" mb={4}>
+                  Osiągnięto limit przyjętych prac — nie możesz zaakceptować więcej zgłoszeń.
+                </Text>
+              )}
             <Heading size="md" mb={4}>
               Oczekujące zgłoszenia
             </Heading>
@@ -222,6 +251,7 @@ function Dashboard() {
                           <Button
                             size="sm"
                             onClick={() => mutationApprove.mutate({ id: application.id })}
+                            disabled={isLimitReached}
                           >
                             Zaakceptuj
                           </Button>
