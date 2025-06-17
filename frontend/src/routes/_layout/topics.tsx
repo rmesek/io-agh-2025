@@ -7,6 +7,7 @@ import {
   VStack,
   Button,
   Text,
+  Input,
 } from "@chakra-ui/react"
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
@@ -53,7 +54,13 @@ type FilterState = {
   status?: "open" | "closed"
 }
 
-function ThesisTable({ filters }: { filters: FilterState | null }) {
+function ThesisTable({
+  filters,
+  searchQuery,
+}: {
+  filters: FilterState | null
+  searchQuery: string
+}) {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
   const queryClient = useQueryClient()
@@ -65,11 +72,9 @@ function ThesisTable({ filters }: { filters: FilterState | null }) {
     select: (data) => data.data.filter((user: UserPublic) => user.role === "promoter"),
   })
 
-  // Fetch all thesis topics (without pagination to allow filtering and pagination client-side)
-  // If data is too big, consider server-side filtering or pagination API changes
   const { data: allTheses, isLoading, isPlaceholderData } = useQuery({
     queryKey: ["thesis-topics"],
-    queryFn: () => ThesisService.readThesisTopics({ skip: 0, limit: 1000 }), // fetch max 1000 to avoid overload
+    queryFn: () => ThesisService.readThesisTopics({ skip: 0, limit: 1000 }),
   })
 
   const { data: applications } = useQuery({
@@ -96,24 +101,35 @@ function ThesisTable({ filters }: { filters: FilterState | null }) {
   const filteredTheses = useMemo(() => {
     if (!allTheses?.data) return []
 
-    return allTheses.data.filter((thesis) => {
-      if (filters == null) return true
+    return allTheses.data
+      .filter((thesis) => {
+        if (filters == null) return true
 
-      if (filters.promoters.length > 0 && !filters.promoters.includes(thesis.promoter_id)) return false
+        if (filters.promoters.length > 0 && !filters.promoters.includes(thesis.promoter_id)) return false
+        if (filters.languages.length > 0 && !filters.languages.includes(thesis.language || "")) return false
+        if (filters.departments.length > 0 && !filters.departments.includes(thesis.department || "")) return false
+        if (filters.availablePlacesMin !== undefined && thesis.slots_available < filters.availablePlacesMin) return false
+        if (filters.stage && filters.stage !== "any" && thesis.target_study_stage !== filters.stage) return false
+        if (filters.status && thesis.status !== filters.status) return false
 
-      if (filters.languages.length > 0 && !filters.languages.includes(thesis.language || "")) return false
+        return true
+      })
+      .filter((thesis) => {
+        if (!searchQuery.trim()) return true
+        const q = searchQuery.toLowerCase()
+        const promoterName = promoters?.find((p) => p.id === thesis.promoter_id)?.full_name || ""
 
-      if (filters.departments.length > 0 && !filters.departments.includes(thesis.department || "")) return false
-
-      if (filters.availablePlacesMin !== undefined && thesis.slots_available < filters.availablePlacesMin) return false
-
-      if (filters.stage && filters.stage !== "any" && thesis.target_study_stage !== filters.stage) return false
-
-      if (filters.status && thesis.status !== filters.status) return false
-
-      return true
-    })
-  }, [allTheses, filters])
+        return (
+          thesis.title?.toLowerCase().includes(q) ||
+          thesis.description?.toLowerCase().includes(q) ||
+          thesis.keywords?.join(" ").toLowerCase().includes(q) ||
+          promoterName.toLowerCase().includes(q) ||
+          thesis.language?.toLowerCase().includes(q) ||
+          thesis.department?.toLowerCase().includes(q) ||
+          thesis.created_at?.toLowerCase().includes(q)
+        )
+      })
+  }, [allTheses, filters, searchQuery, promoters])
 
   const pagedTheses = useMemo(() => {
     const start = (page - 1) * PER_PAGE
@@ -230,6 +246,7 @@ function ThesisTable({ filters }: { filters: FilterState | null }) {
 
 function Thesis() {
   const [filters, setFilters] = useState<FilterState | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
 
@@ -237,9 +254,18 @@ function Thesis() {
 
   return (
     <Container maxW="full" py={8}>
-      <Flex justify="space-between" align="center" mb={8}>
+      <Flex justify="space-between" align="center" mb={8} gap={4} wrap="wrap">
         <Heading size="lg">Tematy prac dyplomowych</Heading>
-        <Flex gap={2}>
+        <Flex gap={2} align="center">
+          <Input
+            placeholder="Szukaj"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setPage(1)
+            }}
+            maxW="300px"
+          />
           <ThesisFilters
             onApplyFilters={(filters) => {
               setFilters(filters)
@@ -248,7 +274,7 @@ function Thesis() {
           />
         </Flex>
       </Flex>
-      <ThesisTable filters={filters} />
+      <ThesisTable filters={filters} searchQuery={searchQuery} />
     </Container>
   )
 }
