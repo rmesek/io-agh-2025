@@ -59,7 +59,6 @@ function ThesisTable({ filters }: { filters: FilterState | null }) {
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
-  // Fetch all promoters
   const { data: promoters } = useQuery({
     queryKey: ["promoters"],
     queryFn: () => UsersService.readUsers({}),
@@ -94,36 +93,28 @@ function ThesisTable({ filters }: { filters: FilterState | null }) {
 
   const setPage = (page: number) => navigate({ search: () => ({ page }) })
 
-  // Filtrujemy dane po stronie klienta
   const filteredTheses = useMemo(() => {
     if (!allTheses?.data) return []
 
     return allTheses.data.filter((thesis) => {
       if (filters == null) return true
 
-      // Promotorzy
       if (filters.promoters.length > 0 && !filters.promoters.includes(thesis.promoter_id)) return false
 
-      // Języki
       if (filters.languages.length > 0 && !filters.languages.includes(thesis.language || "")) return false
 
-      // Wydział
       if (filters.departments.length > 0 && !filters.departments.includes(thesis.department || "")) return false
 
-      // Minimalna liczba dostępnych miejsc
       if (filters.availablePlacesMin !== undefined && thesis.slots_available < filters.availablePlacesMin) return false
 
-      // Etap
       if (filters.stage && filters.stage !== "any" && thesis.target_study_stage !== filters.stage) return false
 
-      // Status
       if (filters.status && thesis.status !== filters.status) return false
 
       return true
     })
   }, [allTheses, filters])
 
-  // Obcinamy dane do aktualnej strony
   const pagedTheses = useMemo(() => {
     const start = (page - 1) * PER_PAGE
     return filteredTheses.slice(start, start + PER_PAGE)
