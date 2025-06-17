@@ -44,6 +44,7 @@ docker volume rm io-agh-2025_app-db-data
 
 ### Autoryzacja
 Standardowo w wersji lokalnej **hasło do każdego konta oraz serwisu** to `changethis`
+
 Przykładowe **adresy email** to `student1@example.com` .. `student7@example.com`
 oraz `promoter1@example.com` .. `promoter4@example.com`
 
@@ -64,8 +65,41 @@ Webowy interfejs bazy danych jest dostępny pod adresem (hasło to `changethis`)
 
 ### Ekran logowania
 
-![API docs](img/login.png)
+![Ekran logowania](img/login.png)
 
-### Ekran główny
+### Widok promotora
 
-![API docs](img/dashboard.png)
+![Widok promotora](img/promoter-applications.png)
+
+### Widok szczegółów pracy dyplomowej
+
+![Widok szczegółów pracy dyplomowej](img/topic-view.png)
+
+### Widok szczegółów pracy dyplomowej (ciemny)
+
+![Widok szczegółów pracy dyplomowej (ciemny)](img/topic-view-dark.png)
+
+
+### Ekran edycji pracy dyplomowej
+
+![Ekran edycji pracy dyplomowej](img/topic-edit.png)
+
+### Widok listy prac dyplomowych
+
+![Widok listy prac dyplomowych](img/student-topics.png)
+
+### Ekran filtrowania prac dyplomowych
+
+![Ekran filtrowania prac dyplomowych](img/topic-filter.png)
+
+### Widok zgłoszeń studenta
+
+![Widok zgłoszeń studenta](img/student-applications.png)
+
+### Dokumentacja OpenAPI
+
+![Dokumentacja OpenAPI](img/openapi.png)
+
+### Webowy interfejs bazy danych
+
+![Webowy interfejs bazy danych](img/adminer.png)
