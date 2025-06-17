@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { ThesisService, ThesisApplicationService, UsersService } from "@/client"
+import { ThesisService, ThesisApplicationService, ApplicationStatusEnum, UsersService } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
 import { ThesisActionsMenu } from "@/components/Common/ThesisActionsMenu"
 import { translateStage, translateStatus } from "@/labels"
@@ -37,10 +37,13 @@ function ThesisDetails() {
   })
 
   const { data: applications } = useQuery({
-    queryKey: ["thesis-applications"],
-    queryFn: () => ThesisApplicationService.readThesisApplicationsStudent(),
-    enabled: currentUser?.role === "student",
-  })
+  queryKey: ["thesis-applications"],
+  queryFn: () =>
+    currentUser?.role === "student"
+      ? ThesisApplicationService.readThesisApplicationsStudent()
+      : ThesisApplicationService.readThesisApplicationsPromoter(),
+  enabled: !!currentUser,
+})
 
   const { data: promoters } = useQuery({
     queryKey: ["promoters"],
@@ -110,56 +113,78 @@ function ThesisDetails() {
               <Info label="Promotor" value={promoter} />
               <Info label="Etap studiów" value={translateStage(thesis.target_study_stage)} />
             </Grid>
+
+            {isPromoter && (
+              <Box width="100%">
+                <Text fontWeight="bold" fontSize="lg" mt={4} mb={2}>
+                  Przypisani studenci
+                </Text>
+                {applications?.data
+                  .filter(
+                    (app) =>
+                      app.thesis_topic.id === thesis.id && app.status === ApplicationStatusEnum.APPROVED_BY_PROMOTER
+                  )
+                  .map((app) => (
+                    <Text key={app.id} fontSize="md">
+                      {app.student.full_name}
+                    </Text>
+                  ))}
+                {applications?.data.filter(
+                  (app) =>
+                    app.thesis_topic.id === thesis.id && app.status === ApplicationStatusEnum.APPROVED_BY_PROMOTER
+                ).length === 0 && <Text>Brak</Text>}
+              </Box>
+            )}
           </VStack>
 
- <Box flex={1} borderLeft="1px solid" borderColor="gray.200" pl={6}>
-  <Stack>
-    <Info label="Status" value={translateStatus(thesis.status)} />
-    <Info
-      label="Sloty"
-      value={`${thesis.slots_total} / ${thesis.slots_available}`}
-    />
-    <Info
-      label="Utworzono"
-      value={new Date(thesis.created_at).toLocaleDateString()}
-    />
-    <Info
-      label="Zaktualizowano"
-      value={new Date(thesis.updated_at).toLocaleDateString()}
-    />
+          <Box flex={1} borderLeft="1px solid" borderColor="gray.200" pl={6}>
+            <Stack>
+              <Info label="Status" value={translateStatus(thesis.status)} />
+              <Info
+                label="Sloty"
+                value={`${thesis.slots_total} / ${thesis.slots_available}`}
+              />
+              <Info
+                label="Utworzono"
+                value={new Date(thesis.created_at).toLocaleDateString()}
+              />
+              <Info
+                label="Zaktualizowano"
+                value={new Date(thesis.updated_at).toLocaleDateString()}
+              />
 
-    {isPromoter && (
-      <GridItem mb={3}>
-        <Text fontWeight="semibold" color="gray.600" fontSize="sm">
-          Akcje
-        </Text>
-        <ThesisActionsMenu thesis={thesis} />
-      </GridItem>
-    )}
-  </Stack>
+              {isPromoter && (
+                <GridItem mb={3}>
+                  <Text fontWeight="semibold" color="gray.600" fontSize="sm">
+                    Akcje
+                  </Text>
+                  <ThesisActionsMenu thesis={thesis} />
+                </GridItem>
+              )}
+            </Stack>
 
-  {isStudent && (
-    <Flex mt={8} justify="flex-end">
-      <Stack>
-        <Button
-          colorScheme="teal"
-          onClick={() => applyMutation.mutate()}
-          disabled={isClosed || hasApplied}
-          size="lg"
-        >
-          Aplikuj
-        </Button>
-        {(isClosed || hasApplied) && (
-          <Text fontSize="sm" color="red.500">
-            {isClosed
-              ? "Ten temat jest zamknięty lub brak dostępnych miejsc."
-              : "Już zgłosiłeś się na ten temat."}
-          </Text>
-        )}
-      </Stack>
-    </Flex>
-  )}
-</Box>
+            {isStudent && (
+              <Flex mt={8} justify="flex-end">
+                <Stack>
+                  <Button
+                    colorScheme="teal"
+                    onClick={() => applyMutation.mutate()}
+                    disabled={isClosed || hasApplied}
+                    size="lg"
+                  >
+                    Aplikuj
+                  </Button>
+                  {(isClosed || hasApplied) && (
+                    <Text fontSize="sm" color="red.500">
+                      {isClosed
+                        ? "Ten temat jest zamknięty lub brak dostępnych miejsc."
+                        : "Już zgłosiłeś się na ten temat."}
+                    </Text>
+                  )}
+                </Stack>
+              </Flex>
+            )}
+          </Box>
         </Flex>
       </Box>
     </Container>
