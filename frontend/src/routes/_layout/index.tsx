@@ -6,9 +6,13 @@ import {
   Table,
   Flex,
 } from "@chakra-ui/react"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { ThesisApplicationService, ApplicationStatusEnum, PromoterProfileService } from "@/client"
+import {
+  ThesisApplicationService,
+  ApplicationStatusEnum,
+  PromoterProfileService,
+} from "@/client"
 import useAuth from "@/hooks/useAuth"
 import {
   PaginationItems,
@@ -26,6 +30,7 @@ function Dashboard() {
   const { user: currentUser } = useAuth()
   const isStudent = currentUser?.role === "student"
   const isPromoter = currentUser?.role === "promoter"
+
   const {
     data: promoterProfile,
     isLoading: isLoadingProfile,
@@ -35,10 +40,10 @@ function Dashboard() {
     queryFn: () => PromoterProfileService.readPromoterProfile(),
     enabled: isPromoter,
   })
+
   const queryClient = useQueryClient()
 
   const PER_PAGE = 5
-
   const [page, setPage] = useState(1)
   const [pendingPage, setPendingPage] = useState(1)
   const [handledPage, setHandledPage] = useState(1)
@@ -48,7 +53,10 @@ function Dashboard() {
     queryKey: ["thesis-applications", currentUser?.id, page],
     queryFn: () => {
       if (isStudent) {
-        return ThesisApplicationService.readThesisApplicationsStudent({ limit: PER_PAGE, skip })
+        return ThesisApplicationService.readThesisApplicationsStudent({
+          limit: PER_PAGE,
+          skip,
+        })
       }
 
       if (isPromoter) {
@@ -72,7 +80,8 @@ function Dashboard() {
           status: ApplicationStatusEnum.CANCELED_BY_STUDENT,
         },
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
   })
 
   const mutationApprove = useMutation({
@@ -85,7 +94,8 @@ function Dashboard() {
           student_message: "",
         },
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
   })
 
   const mutationReject = useMutation({
@@ -98,7 +108,22 @@ function Dashboard() {
           student_message: "",
         },
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
+  })
+
+  const mutationUndo = useMutation({
+    mutationFn: ({ id }: { id: string }) =>
+      ThesisApplicationService.updateThesisApplicationPromoter({
+        id,
+        query: { application_id: id },
+        requestBody: {
+          status: ApplicationStatusEnum.PENDING_APPROVAL,
+          student_message: "",
+        },
+      }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["thesis-applications"] }),
   })
 
   if (isLoading) return <Text>Loading...</Text>
@@ -110,7 +135,7 @@ function Dashboard() {
     canceled_by_student: "Anulowane przez studenta",
   }
 
-  const applications = (data as any)?.data ?? []
+  const applications = data?.data ?? []
   const count = applications.length
 
   const pendingApplications = applications.filter(
@@ -168,19 +193,33 @@ function Dashboard() {
                 </Table.Header>
                 <Table.Body>
                   {applications.map((application) => (
-                    <Table.Row
-                      key={application.id}
-                    >
-                      <Table.Cell>{application.thesis_topic?.title ?? "N/A"}</Table.Cell>
-                      <Table.Cell>{application.thesis_topic?.promoter?.full_name ?? "-"}</Table.Cell>
-                      <Table.Cell>{new Date(application.created_at).toLocaleDateString()}</Table.Cell>
-                      <Table.Cell>{statusLabels[application.status] ?? "N/A"}</Table.Cell>
+                    <Table.Row key={application.id}>
                       <Table.Cell>
-                        {application.status !== ApplicationStatusEnum.CANCELED_BY_STUDENT && (
+                        <Link
+                          to="/$id"
+                          params={{ id: application.thesis_topic?.id ?? "" }}
+                        >
+                          {application.thesis_topic?.title ?? "N/A"}
+                        </Link>
+                      </Table.Cell>
+                      <Table.Cell>
+                        {application.thesis_topic?.promoter?.full_name ?? "-"}
+                      </Table.Cell>
+                      <Table.Cell>
+                        {new Date(application.created_at).toLocaleDateString()}
+                      </Table.Cell>
+                      <Table.Cell>
+                        {statusLabels[application.status] ?? "N/A"}
+                      </Table.Cell>
+                      <Table.Cell>
+                        {application.status !==
+                          ApplicationStatusEnum.CANCELED_BY_STUDENT && (
                           <Button
                             size="sm"
                             colorScheme="red"
-                            onClick={() => mutationCancel.mutate({ id: application.id })}
+                            onClick={() =>
+                              mutationCancel.mutate({ id: application.id })
+                            }
                           >
                             Anuluj
                           </Button>
@@ -213,14 +252,15 @@ function Dashboard() {
       {isPromoter && (
         <Flex gap={8} direction="column">
           <Container flex={1} minW="360px">
-          <Heading size="md" mb={2}>
-                Przyjęte prace: {acceptedCount} / {topicLimit || "Brak limitu"}
-              </Heading>
-              {isLimitReached && (
-                <Text color="red.500" mb={4}>
-                  Osiągnięto limit przyjętych prac — nie możesz zaakceptować więcej zgłoszeń.
-                </Text>
-              )}
+            <Heading size="md" mb={2}>
+              Przyjęte prace: {acceptedCount} / {topicLimit || "Brak limitu"}
+            </Heading>
+            {isLimitReached && (
+              <Text color="red.500" mb={4}>
+                Osiągnięto limit przyjętych prac — nie możesz zaakceptować więcej zgłoszeń.
+              </Text>
+            )}
+
             <Heading size="md" mb={4}>
               Oczekujące zgłoszenia
             </Heading>
@@ -241,16 +281,27 @@ function Dashboard() {
                   </Table.Header>
                   <Table.Body>
                     {paginatedPending.map((application) => (
-                      <Table.Row
-                        key={application.id}
-                      >
-                        <Table.Cell>{application.thesis_topic?.title ?? "N/A"}</Table.Cell>
-                        <Table.Cell>{application.student?.full_name ?? "-"}</Table.Cell>
-                        <Table.Cell>{new Date(application.created_at).toLocaleDateString()}</Table.Cell>
+                      <Table.Row key={application.id}>
+                        <Table.Cell>
+                          <Link
+                            to="/$id"
+                            params={{ id: application.thesis_topic?.id ?? "" }}
+                          >
+                            {application.thesis_topic?.title ?? "N/A"}
+                          </Link>
+                        </Table.Cell>
+                        <Table.Cell>
+                          {application.student?.full_name ?? "-"}
+                        </Table.Cell>
+                        <Table.Cell>
+                          {new Date(application.created_at).toLocaleDateString()}
+                        </Table.Cell>
                         <Table.Cell>
                           <Button
                             size="sm"
-                            onClick={() => mutationApprove.mutate({ id: application.id })}
+                            onClick={() =>
+                              mutationApprove.mutate({ id: application.id })
+                            }
                             disabled={isLimitReached}
                           >
                             Zaakceptuj
@@ -259,7 +310,9 @@ function Dashboard() {
                         <Table.Cell>
                           <Button
                             size="sm"
-                            onClick={() => mutationReject.mutate({ id: application.id })}
+                            onClick={() =>
+                              mutationReject.mutate({ id: application.id })
+                            }
                           >
                             Odrzuć
                           </Button>
@@ -302,16 +355,36 @@ function Dashboard() {
                       <Table.ColumnHeader>Praca</Table.ColumnHeader>
                       <Table.ColumnHeader>Student</Table.ColumnHeader>
                       <Table.ColumnHeader>Status</Table.ColumnHeader>
+                      <Table.ColumnHeader></Table.ColumnHeader>
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>
                     {paginatedHandled.map((application) => (
-                      <Table.Row
-                        key={application.id}
-                      >
-                        <Table.Cell>{application.thesis_topic?.title ?? "N/A"}</Table.Cell>
-                        <Table.Cell>{application.student?.full_name ?? "-"}</Table.Cell>
-                        <Table.Cell>{statusLabels[application.status] ?? "N/A"}</Table.Cell>
+                      <Table.Row key={application.id}>
+                        <Table.Cell>
+                          <Link
+                            to="/$id"
+                            params={{ id: application.thesis_topic?.id ?? "" }}
+                          >
+                            {application.thesis_topic?.title ?? "N/A"}
+                          </Link>
+                        </Table.Cell>
+                        <Table.Cell>
+                          {application.student?.full_name ?? "-"}
+                        </Table.Cell>
+                        <Table.Cell>
+                          {statusLabels[application.status] ?? "N/A"}
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              mutationUndo.mutate({ id: application.id })
+                            }
+                          >
+                            Cofnij
+                          </Button>
+                        </Table.Cell>
                       </Table.Row>
                     ))}
                   </Table.Body>
@@ -336,7 +409,6 @@ function Dashboard() {
           </Container>
         </Flex>
       )}
-
     </Container>
   )
 }

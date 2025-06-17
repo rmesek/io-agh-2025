@@ -29,6 +29,7 @@ import {
 import useCustomToast from "@/hooks/useCustomToast"
 import ThesisFilters from "@/components/Thesis/ThesisFilters"
 import { useState, useMemo } from "react"
+import { translateStage, translateStatus } from "@/labels"
 
 const PER_PAGE = 5
 
@@ -109,7 +110,7 @@ function ThesisTable({
         if (filters.languages.length > 0 && !filters.languages.includes(thesis.language || "")) return false
         if (filters.departments.length > 0 && !filters.departments.includes(thesis.department || "")) return false
         if (filters.availablePlacesMin !== undefined && thesis.slots_available < filters.availablePlacesMin) return false
-        if (filters.stage && filters.stage !== "any" && thesis.target_study_stage !== filters.stage) return false
+        if (filters.stage && filters.stage !== "any" && thesis.target_study_stage !== filters.stage && thesis.target_study_stage !== "any") return false
         if (filters.status && thesis.status !== filters.status) return false
 
         return true
@@ -183,11 +184,11 @@ function ThesisTable({
                     {thesis.title}
                   </Link>
                 </Table.Cell>
-                <Table.Cell>{capitalize(thesis.target_study_stage)}</Table.Cell>
+                <Table.Cell>{translateStage(thesis.target_study_stage)}</Table.Cell>
                 <Table.Cell>
                   {thesis.slots_total} / {thesis.slots_available}
                 </Table.Cell>
-                <Table.Cell>{capitalize(thesis.status)}</Table.Cell>
+                <Table.Cell>{translateStatus(thesis.status)}</Table.Cell>
                 <Table.Cell>
                   {promoters?.find((p) => p.id === thesis.promoter_id)?.full_name || "Brak"}
                 </Table.Cell>

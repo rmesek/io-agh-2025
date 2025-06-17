@@ -18,6 +18,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { ThesisService, ThesisApplicationService, UsersService } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
 import { ThesisActionsMenu } from "@/components/Common/ThesisActionsMenu"
+import { translateStage, translateStatus } from "@/labels"
 export const Route = createFileRoute("/_layout/$id")({
   component: ThesisDetails,
 })
@@ -107,13 +108,13 @@ function ThesisDetails() {
               <Info label="Język" value={thesis.language || "N/A"} />
               <Info label="Wydział" value={thesis.department || "N/A"} />
               <Info label="Promotor" value={promoter} />
-              <Info label="Etap studiów" value={thesis.target_study_stage} />
+              <Info label="Etap studiów" value={translateStage(thesis.target_study_stage)} />
             </Grid>
           </VStack>
 
  <Box flex={1} borderLeft="1px solid" borderColor="gray.200" pl={6}>
   <Stack>
-    <Info label="Status" value={thesis.status} />
+    <Info label="Status" value={translateStatus(thesis.status)} />
     <Info
       label="Sloty"
       value={`${thesis.slots_total} / ${thesis.slots_available}`}
